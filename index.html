@@ -1,0 +1,2020 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Onomio: reminders for birthdays, name days and holidays, with ready-made wishes in 8 languages.">
+<meta name="theme-color" content="#E3346E">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/icons/favicon-48.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Onomio – Name Days & Wishes</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=Commissioner:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one phone-width column, festive wordmark band on top, list of upcoming occasions, bottom-sheet composer */
+:root{
+  --bg:#F6F4FF; --surface:#FFFFFF; --ink:#1D1736; --muted:#6A6387; --line:#E3DFF3;
+  --accent:#E3346E; --accent-ink:#FFFFFF; --soft:#FCE6EE;
+  --sun:#E9A912; --mint:#0F9F90; --violet:#6A55F0; --ok:#178A55;
+  --f-display:"Comfortaa","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Commissioner","Segoe UI",system-ui,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#13101F; --surface:#1D1830; --ink:#F2EFFF; --muted:#A59DC6; --line:#2F2948;
+  --accent:#FF5E92; --accent-ink:#1A0C14; --soft:#3A1D2D;
+  --sun:#FFC845; --mint:#3DD6C4; --violet:#9C8CFF; --ok:#4FD08E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#13101F; --surface:#1D1830; --ink:#F2EFFF; --muted:#A59DC6; --line:#2F2948;
+  --accent:#FF5E92; --accent-ink:#1A0C14; --soft:#3A1D2D;
+  --sun:#FFC845; --mint:#3DD6C4; --violet:#9C8CFF; --ok:#4FD08E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+
+header.top{padding-top:22px;display:flex;flex-direction:column;gap:10px;position:relative}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{font-family:var(--f-display);font-weight:700;font-size:34px;letter-spacing:-.5px;line-height:1}
+.logo span:nth-child(1){color:var(--accent)} .logo span:nth-child(2){color:var(--sun)} .logo span:nth-child(3){color:var(--mint)}
+.logo span:nth-child(4){color:var(--violet)} .logo span:nth-child(5){color:var(--accent)} .logo span:nth-child(6){color:var(--sun)}
+.logo span:nth-child(7){color:var(--mint)}
+.tag{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.dots{position:absolute;right:0;top:18px;width:120px;height:56px;pointer-events:none}
+.proto{font-size:12px;color:var(--muted)}
+
+.todaycard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.todaycard h2{margin:0;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.todaycard p{margin:0}
+.todaycard .names{font-weight:600}
+.cc{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;padding:1px 6px;border-radius:6px;background:var(--line);color:var(--muted);margin-right:6px;vertical-align:1px}
+
+nav.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.tabs button{flex:1;border:0;background:transparent;padding:9px 6px;border-radius:999px;font-weight:600;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+
+.banner{background:var(--soft);border-radius:var(--r);padding:10px 14px;font-size:13.5px}
+.group{display:flex;flex-direction:column;gap:8px}
+.group h3{margin:6px 0 0;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ev{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;text-align:left;width:100%}
+.ev:hover{border-color:var(--violet)}
+.ev .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:21px}
+.ev .body{min-width:0}
+.ev .t{font-weight:700;display:block}
+.ev .who{color:var(--muted);font-size:13.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev .when{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--line);color:var(--ink)}
+.pill.today{background:var(--accent);color:var(--accent-ink)}
+.pill.done{background:transparent;color:var(--ok);padding:0}
+.t-birthday .ic{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.t-nameday .ic{background:color-mix(in srgb,var(--violet) 16%,transparent)}
+.t-holiday .ic{background:color-mix(in srgb,var(--sun) 20%,transparent)}
+.t-love .ic{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+
+.person{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-family:var(--f-display);color:#fff}
+.person .meta{color:var(--muted);font-size:13px}
+.person .name{font-weight:700}
+.ex{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:0 5px;margin-left:6px;vertical-align:2px}
+.ghost{border:1px solid var(--line);background:transparent;border-radius:10px;padding:7px 11px;font-size:13.5px;font-weight:600}
+.ghost.danger{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+.primary{border:0;background:var(--accent);color:var(--accent-ink);border-radius:12px;padding:12px 16px;font-weight:700}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{margin:0;font-size:16px}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;padding:10px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.small{font-size:13px;color:var(--muted);margin:0}
+
+dialog{border:0;padding:0;background:transparent;max-width:none;max-height:none;width:100%;height:100%;margin:0}
+dialog::backdrop{background:rgb(10 6 25 / .5)}
+.sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:600px;max-height:92%;overflow:auto;background:var(--surface);color:var(--ink);
+  border-radius:20px 20px 0 0;padding:18px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.sheet .grip{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto}
+.sheet h2{margin:0;font-family:var(--f-display);font-size:21px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-weight:600;font-size:13.5px}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--soft)}
+.chip .ok{color:var(--ok)}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+textarea{min-height:120px;resize:vertical;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.grid2{grid-template-columns:1fr}}
+.send{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.send a,.send button{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);border-radius:12px;padding:10px 4px;text-decoration:none;color:var(--ink);font-weight:600;font-size:12.5px;background:transparent}
+.send a b,.send button b{font-size:19px}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+.lock{font-size:11px;font-weight:700;color:var(--violet);margin-left:4px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;z-index:50;max-width:calc(100% - 32px)}
+canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:60;width:100%;height:100%}
+.empty{text-align:center;color:var(--muted);padding:24px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header class="top">
+    <svg class="dots" viewBox="0 0 120 56" aria-hidden="true">
+      <rect x="10" y="8" width="8" height="4" rx="2" fill="var(--accent)" transform="rotate(25 14 10)"/>
+      <circle cx="40" cy="30" r="3.5" fill="var(--sun)"/>
+      <rect x="62" y="6" width="9" height="4" rx="2" fill="var(--mint)" transform="rotate(-30 66 8)"/>
+      <circle cx="88" cy="22" r="3" fill="var(--violet)"/>
+      <rect x="100" y="40" width="8" height="4" rx="2" fill="var(--accent)" transform="rotate(60 104 42)"/>
+      <circle cx="22" cy="44" r="2.5" fill="var(--violet)"/>
+      <rect x="72" y="42" width="7" height="3.5" rx="1.7" fill="var(--sun)" transform="rotate(10 75 44)"/>
+    </svg>
+    <div class="brand"><div class="logo" aria-label="Onomio"><span>O</span><span>n</span><span>o</span><span>m</span><span>i</span><span>o</span></div></div>
+    <div class="tag" id="ui-tag">Γιορτές · Γενέθλια · Ευχές</div>
+    <p class="proto" id="ui-proto"></p>
+  </header>
+
+  <section class="todaycard" id="todaycard"></section>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-upcoming" aria-selected="true">Επόμενα</button>
+    <button role="tab" id="tab-people" aria-selected="false">Πρόσωπα</button>
+    <button role="tab" id="tab-settings" aria-selected="false">Ρυθμίσεις</button>
+  </nav>
+
+  <main id="view"></main>
+</div>
+
+<dialog id="dlg"><div class="sheet" id="sheet"></div></dialog>
+
+<script>
+/* ---------- Data: name-day calendars (sample, to be verified) ---------- */
+const GR_CAL = [
+ ['01-01',['Βασίλης','Βασίλειος','Βασιλική','Βάσω']],
+ ['01-06',['Φώτης','Φώτιος','Θεοφάνης','Φάνης','Φανή']],
+ ['01-07',['Γιάννης','Ιωάννης','Ιωάννα','Γιάννα']],
+ ['01-17',['Αντώνης','Αντώνιος','Αντωνία']],
+ ['01-18',['Θανάσης','Αθανάσιος','Αθανασία']],
+ ['02-08',['Θεόδωρος','Θοδωρής']],
+ ['02-10',['Χαράλαμπος','Μπάμπης']],
+ ['03-25',['Ευάγγελος','Βαγγέλης','Ευαγγελία','Λίτσα']],
+ ['04-23',['Γιώργος','Γεώργιος','Γεωργία'],'george'],
+ ['05-05',['Ειρήνη']],
+ ['05-21',['Κωνσταντίνος','Κώστας','Ντίνος','Κωνσταντίνα','Ελένη','Λένα']],
+ ['06-29',['Πέτρος','Παύλος','Πέτρα','Παυλίνα']],
+ ['07-20',['Ηλίας']],
+ ['07-25',['Άννα']],
+ ['07-26',['Παρασκευή','Βούλα','Εύη']],
+ ['08-15',['Μαρία','Μαίρη','Παναγιώτης','Γιώτα','Παναγιώτα','Δέσποινα']],
+ ['08-30',['Αλέξανδρος','Αλέκος','Αλεξάνδρα']],
+ ['09-14',['Σταύρος','Σταυρούλα']],
+ ['09-17',['Σοφία']],
+ ['10-20',['Γεράσιμος']],
+ ['10-26',['Δημήτρης','Δημήτριος','Δήμητρα','Μίμης']],
+ ['11-08',['Μιχάλης','Μιχαήλ','Γαβριήλ','Άγγελος','Αγγελική']],
+ ['11-25',['Αικατερίνη','Κατερίνα']],
+ ['11-26',['Στέλιος','Στυλιανός','Στέλλα']],
+ ['11-30',['Ανδρέας','Αντρέας']],
+ ['12-04',['Βαρβάρα']],
+ ['12-06',['Νίκος','Νικόλαος','Νικολέτα']],
+ ['12-12',['Σπύρος','Σπυρίδων']],
+ ['12-22',['Αναστασία']],
+ ['12-25',['Χρήστος','Χριστίνα','Μανώλης','Εμμανουήλ']]
+];
+const PL_CAL = [
+ ['01-21',['Agnieszka']],['03-04',['Kazimierz']],['03-19',['Józef']],
+ ['04-23',['Wojciech','Jerzy']],['04-25',['Marek']],['05-08',['Stanisław']],
+ ['05-15',['Zofia']],['06-24',['Jan']],['06-29',['Piotr','Paweł']],
+ ['07-22',['Magdalena']],['07-25',['Krzysztof']],['07-26',['Anna']],
+ ['09-29',['Michał']],['10-18',['Łukasz']],['11-11',['Marcin']],
+ ['11-25',['Katarzyna']],['11-30',['Andrzej']],['12-04',['Barbara']],
+ ['12-06',['Mikołaj']],['12-21',['Tomasz']],['12-24',['Adam','Ewa']]
+];
+const LANGS = {el:'Ελληνικά',en:'English',pl:'Polski'};
+
+/* ---------- Wishes ---------- */
+/* Prefix "f|" = επίσημο, "h|" = χιουμοριστικό, χωρίς πρόθεμα = ζεστό. {name} = όνομα, {year} = έτος. */
+const WISHES = {
+ birthday:{
+  el:['Χρόνια πολλά, {name}! Σου εύχομαι υγεία, αγάπη και κάθε σου όνειρο να γίνει πραγματικότητα. 🎂',
+      'Να τα εκατοστήσεις, {name}! Μια χρονιά γεμάτη χαμόγελα, υγεία και όμορφες στιγμές.',
+      'Χρόνια σου πολλά και ευτυχισμένα, {name}! Πάντα με υγεία και χαρά δίπλα σε όσους αγαπάς.',
+      'Χρόνια πολλά, {name}! Να είναι η νέα σου χρονιά η καλύτερη μέχρι τώρα. 🎉',
+      '{name}, χρόνια πολλά! Υγεία, γέλιο και πολλές όμορφες εκπλήξεις σου εύχομαι.',
+      'Να τα χιλιάσεις, {name}! Ό,τι επιθυμεί η καρδιά σου.',
+      'Χρόνια πολλά, {name}! Να έχεις πάντα λόγους να χαμογελάς. 🎈',
+      'f|Χρόνια πολλά, {name}! Σας εύχομαι υγεία, προσωπική ευτυχία και κάθε επιτυχία.',
+      'f|Θερμές ευχές για τα γενέθλιά σας, {name}. Χρόνια πολλά και δημιουργικά!',
+      'f|Χρόνια πολλά, {name}! Με εκτίμηση, σας εύχομαι μια χρονιά γεμάτη υγεία και επιτυχίες.',
+      'h|Χρόνια πολλά, {name}! Μην μετράς τα κεριά, μέτρα τα χαμόγελα. 😄🎂',
+      'h|{name}, δεν μεγαλώνεις, απλώς ανεβαίνεις επίπεδο! Χρόνια πολλά! 🎮',
+      'h|Χρόνια πολλά, {name}! Τα κεριά πολλά, αλλά η καρδιά πάντα νέα! 🔥'],
+  en:['Happy birthday, {name}! Wishing you health, love and a year full of good moments. 🎂',
+      'Many happy returns, {name}! May all your wishes come true this year.',
+      'Happy birthday, {name}! Here’s to another year of laughter and adventures. 🎉',
+      'Wishing you the happiest of birthdays, {name}! You deserve the very best.',
+      'Happy birthday, {name}! May your day be as wonderful as you are. 🎈',
+      'Cheers to you, {name}! Health, happiness and lots of cake. 🎂',
+      'Happy birthday, {name}! So grateful to have you in my life.',
+      'f|Happy birthday, {name}! Wishing you good health and continued success.',
+      'f|Warmest birthday wishes, {name}. Have a wonderful year ahead.',
+      'f|Happy birthday, {name}! All the best for the year ahead.',
+      'h|Happy birthday, {name}! You’re not getting older, you’re levelling up. 🎮',
+      'h|Happy birthday, {name}! Don’t count the candles, just enjoy the glow. 😄🔥'],
+  pl:['Wszystkiego najlepszego z okazji urodzin, {name}! Dużo zdrowia, szczęścia i uśmiechu. Sto lat! 🎂',
+      'Sto lat, {name}! Niech spełnią się wszystkie Twoje marzenia.',
+      'Wszystkiego najlepszego, {name}! Niech ten rok będzie pełen radości i miłości. 🎉',
+      'Z okazji urodzin życzę Ci, {name}, zdrowia, spokoju i wielu powodów do uśmiechu.',
+      'Sto lat, sto lat, {name}! Spełnienia marzeń i samych pięknych chwil. 🎈',
+      'Najlepsze życzenia urodzinowe, {name}! Niech każdy dzień przynosi Ci coś dobrego.',
+      'Wszystkiego dobrego, {name}! Cieszę się, że jesteś w moim życiu.',
+      'f|Z okazji urodzin składam serdeczne życzenia zdrowia i wszelkiej pomyślności, {name}.',
+      'f|Wszystkiego najlepszego z okazji urodzin, {name}! Wielu sukcesów w życiu osobistym i zawodowym.',
+      'f|Serdeczne życzenia urodzinowe, {name}. Wszystkiego dobrego!',
+      'h|Sto lat, {name}! Nie liczy się wiek, tylko liczba uśmiechów. 😄🎂',
+      'h|Wszystkiego najlepszego, {name}! Nie starzejesz się, tylko zdobywasz kolejny poziom. 🎮']},
+ nameday:{
+  el:['Χρόνια πολλά, {name}! Να χαίρεσαι τη γιορτή σου με υγεία και αγάπη.',
+      'Χρόνια πολλά για τη γιορτή σου, {name}! Πάντα με υγεία, χαρά και όμορφες στιγμές.',
+      '{name}, χρόνια πολλά! Να χαίρεσαι το όνομά σου.',
+      'Χρόνια πολλά, {name}! Ο Άγιος να σε φυλάει πάντα.',
+      'Να χαίρεσαι το όνομά σου, {name}, και να το χαίρονται όσοι σε αγαπούν! 🌸',
+      'Χρόνια πολλά, {name}! Υγεία, ευτυχία και ό,τι επιθυμείς.',
+      'f|Χρόνια πολλά, {name}! Σας εύχομαι υγεία και να χαίρεστε το όνομά σας.',
+      'f|Θερμές ευχές για την ονομαστική σας εορτή, {name}. Χρόνια πολλά!',
+      'h|Χρόνια πολλά, {name}! Σήμερα κερνάς εσύ, έτσι λέει η παράδοση. 😄',
+      'h|{name}, χρόνια πολλά! Το τηλέφωνό σου σήμερα θα πάρει φωτιά. 📱🔥'],
+  en:['Happy name day, {name}! Wishing you health and happiness.',
+      'Happy name day, {name}! Enjoy your special day. 🌸',
+      'Wishing you a wonderful name day, {name}! All the best.',
+      'Happy name day, {name}! May your name always bring you joy.',
+      'f|Happy name day, {name}! Best wishes for health and success.',
+      'h|Happy name day, {name}! Two celebrations a year? Lucky you! 😄'],
+  pl:['Wszystkiego najlepszego z okazji imienin, {name}! Dużo zdrowia, radości i pomyślności.',
+      'Z okazji imienin, {name}, życzę Ci zdrowia, szczęścia i samych pięknych chwil!',
+      'Najserdeczniejsze życzenia imieninowe, {name}! Sto lat! 🌸',
+      'Wszystkiego dobrego w dniu imienin, {name}! Spełnienia marzeń.',
+      '{name}, z okazji imienin dużo uśmiechu, miłości i spokoju!',
+      'Sto lat, {name}! Niech Twoje imię zawsze przynosi Ci szczęście.',
+      'f|Z okazji imienin składam serdeczne życzenia zdrowia i pomyślności, {name}.',
+      'f|Wszystkiego najlepszego z okazji imienin, {name}. Wielu sukcesów!',
+      'h|Wszystkiego najlepszego, {name}! Dziś Ty stawiasz ciasto, taka tradycja. 😄🍰',
+      'h|Sto lat, {name}! Dziś Twój telefon nie przestanie dzwonić. 📱']},
+ newyear:{
+  el:['Καλή Χρονιά, {name}! Ευτυχισμένο και δημιουργικό το {year}, με υγεία και αγάπη.',
+      'Χρόνια πολλά και καλή χρονιά! Να έχεις ένα {year} γεμάτο υγεία και χαμόγελα.',
+      'Καλή Χρονιά, {name}! Ό,τι ποθεί η καρδιά σου να το φέρει το {year}. ✨',
+      'Ευτυχισμένο το {year}, {name}! Υγεία, αγάπη και καλές στιγμές με τους δικούς σου.',
+      'Καλή Χρονιά και καλή πρωτοχρονιά! Το {year} να σου χαμογελάσει, {name}. 🥂',
+      'f|Καλή Χρονιά, {name}! Σας εύχομαι υγεία και επιτυχία σε κάθε σας βήμα το {year}.',
+      'f|Χρόνια πολλά και ευτυχισμένο το {year}. Ευχαριστώ για τη συνεργασία!',
+      'h|Καλή Χρονιά, {name}! Φέτος να σου πέσει το φλουρί και να μη σου μείνουν τα κιλά της βασιλόπιτας. 😄'],
+  en:['Happy New Year, {name}! Wishing you a healthy and joyful {year}.',
+      'Happy New Year, {name}! May {year} bring you everything you’re hoping for. ✨',
+      'Cheers to {year}, {name}! Health, love and lots of happy moments. 🥂',
+      'Happy New Year, {name}! Here’s to new beginnings.',
+      'Wishing you a bright and happy {year}, {name}!',
+      'f|Happy New Year, {name}! Wishing you health and success in {year}.',
+      'f|Best wishes for {year}, {name}. Thank you for working with us!',
+      'h|Happy New Year, {name}! May your resolutions last longer than the fireworks. 🎆😄'],
+  pl:['Szczęśliwego Nowego Roku, {name}! Niech {year} przyniesie Ci zdrowie i radość.',
+      'Do siego roku, {name}! Wszystkiego najlepszego w {year}. ✨',
+      'Szczęśliwego Nowego Roku, {name}! Niech spełnią się wszystkie postanowienia. 🥂',
+      'Wszystkiego dobrego w nowym roku, {name}! Dużo zdrowia, miłości i spokoju.',
+      'Niech {year} będzie dla Ciebie wyjątkowy, {name}! Szczęśliwego Nowego Roku!',
+      'f|Szczęśliwego Nowego Roku, {name}! Zdrowia i sukcesów w {year}.',
+      'f|Wszystkiego najlepszego w {year}, {name}. Dziękujemy za współpracę!',
+      'h|Szczęśliwego Nowego Roku, {name}! Niech postanowienia trwają dłużej niż fajerwerki. 🎆😄']},
+ christmas:{
+  el:['Καλά Χριστούγεννα, {name}! Ζεστές γιορτές με τα αγαπημένα σου πρόσωπα.',
+      'Χρόνια πολλά και καλά Χριστούγεννα, {name}! Υγεία, γαλήνη και χαρά σε όλο το σπίτι.',
+      'Καλά Χριστούγεννα, {name}! Να έχεις φως, αγάπη και ζεστασιά. 🎄',
+      'Χρόνια πολλά, {name}! Οι γιορτές να σου φέρουν ηρεμία και όμορφες στιγμές.',
+      'Καλές γιορτές, {name}! Καλά Χριστούγεννα σε σένα και την οικογένειά σου. ✨',
+      'f|Καλά Χριστούγεννα, {name}. Σας εύχομαι ήρεμες γιορτές και υγεία σε όλη την οικογένεια.',
+      'f|Χρόνια πολλά και καλές γιορτές, {name}! Ευχαριστούμε για την εμπιστοσύνη σας.',
+      'h|Καλά Χριστούγεννα, {name}! Τα μελομακάρονα των γιορτών δεν μετράνε. 😄🎄'],
+  en:['Merry Christmas, {name}! Warm wishes to you and your family.',
+      'Merry Christmas, {name}! Wishing you peace, joy and cosy moments. 🎄',
+      'Merry Christmas and happy holidays, {name}! ✨',
+      'Wishing you a magical Christmas, {name}, full of love and laughter.',
+      'Merry Christmas, {name}! May your home be filled with warmth.',
+      'f|Merry Christmas, {name}. Wishing you and your family a peaceful holiday season.',
+      'f|Season’s greetings, {name}! Thank you for your trust this year.',
+      'h|Merry Christmas, {name}! Calories don’t count at Christmas. 🍪😄'],
+  pl:['Wesołych Świąt Bożego Narodzenia, {name}! Dużo ciepła, spokoju i rodzinnej atmosfery.',
+      'Zdrowych, spokojnych i radosnych Świąt, {name}! 🎄',
+      'Wesołych Świąt, {name}! Niech magia Bożego Narodzenia wypełni Twój dom.',
+      'Spokojnej Wigilii i Wesołych Świąt, {name}! ✨',
+      'Wesołych Świąt, {name}! Smacznego barszczu i dużo prezentów pod choinką. 🎁',
+      'f|Zdrowych i spokojnych Świąt Bożego Narodzenia, {name}. Wszystkiego dobrego dla całej rodziny.',
+      'f|Wesołych Świąt, {name}, i dziękujemy za zaufanie w tym roku!',
+      'h|Wesołych Świąt, {name}! W Święta kalorie się nie liczą. 🍪😄']},
+ easter_o:{
+  el:['Χριστός Ανέστη, {name}! Καλή Ανάσταση και καλό Πάσχα με υγεία και αγάπη.',
+      'Καλή Ανάσταση, {name}! Χρόνια πολλά και καλό Πάσχα σε εσένα και την οικογένειά σου.',
+      'Καλό Πάσχα, {name}! Το φως της Ανάστασης να γεμίσει το σπίτι σου χαρά. 🕯️',
+      'Χρόνια πολλά, {name}! Καλή Ανάσταση και καλό τσούγκρισμα! 🥚',
+      'f|Καλή Ανάσταση και καλό Πάσχα, {name}. Σας εύχομαι υγεία και χαρά.',
+      'h|Χριστός Ανέστη, {name}! Να κερδίσεις στο τσούγκρισμα και να σου μείνει και λίγο αρνάκι! 🐑😄'],
+  en:['Happy Easter, {name}! Christ is Risen! Wishing you joy and peace.',
+      'Christ is Risen, {name}! Happy Orthodox Easter to you and your family. 🕯️',
+      'Happy Easter, {name}! May the light of the Resurrection fill your home.',
+      'f|Happy Orthodox Easter, {name}. Best wishes to you and your family.'],
+  pl:['Wesołych Świąt Wielkanocnych, {name}! Chrystus zmartwychwstał!',
+      'Radosnych Świąt Wielkanocnych, {name}! Wszystkiego dobrego. 🕯️',
+      'f|Zdrowych Świąt Wielkanocnych, {name}. Wszystkiego dobrego.']},
+ easter_w:{
+  el:['Καλό Πάσχα, {name}! Χρόνια πολλά με υγεία και χαρά.',
+      'Καλό Πάσχα, {name}! Ζεστές γιορτές με τους αγαπημένους σου. 🐣',
+      'f|Καλό Πάσχα, {name}. Σας εύχομαι υγεία και χαρά.'],
+  en:['Happy Easter, {name}! Wishing you a joyful spring and time with the people you love.',
+      'Happy Easter, {name}! May your day be full of joy and chocolate eggs. 🐣',
+      'Wishing you a peaceful and happy Easter, {name}!',
+      'Happy Easter, {name}! Enjoy the spring sunshine. 🌷',
+      'f|Happy Easter, {name}. Best wishes to you and your family.',
+      'h|Happy Easter, {name}! May the Easter bunny be generous this year. 🐰😄'],
+  pl:['Wesołych Świąt Wielkanocnych, {name}! Zdrowych, pogodnych świąt i smacznego jajka!',
+      'Smacznego jajka i mokrego Dyngusa, {name}! 🐣',
+      'Radosnych Świąt Wielkanocnych, {name}! Dużo wiosennego słońca i spokoju. 🌷',
+      'Wesołego Alleluja, {name}! Wszystkiego dobrego dla całej rodziny.',
+      'f|Zdrowych i spokojnych Świąt Wielkanocnych, {name}. Wszystkiego dobrego.',
+      'h|Smacznego jajka, {name}! I uważaj w Lany Poniedziałek! 💦😄']},
+ thanksgiving:{
+  el:['Καλή Ημέρα των Ευχαριστιών, {name}! Χαίρομαι που σε έχω στη ζωή μου.',
+      'f|Καλή Ημέρα των Ευχαριστιών, {name}. Ευχαριστώ για τη συνεργασία!'],
+  en:['Happy Thanksgiving, {name}! Grateful to have you in my life.',
+      'Happy Thanksgiving, {name}! Wishing you a table full of food and a heart full of joy. 🦃',
+      'Thankful for you today and every day, {name}. Happy Thanksgiving!',
+      'f|Happy Thanksgiving, {name}. Thank you for your trust and partnership.',
+      'h|Happy Thanksgiving, {name}! Save me a slice of pie. 🥧😄'],
+  pl:['Szczęśliwego Święta Dziękczynienia, {name}! Cieszę się, że jesteś w moim życiu.',
+      'Szczęśliwego Thanksgiving, {name}! 🦃']},
+ valentine:{
+  el:['Χρόνια πολλά για τον Άγιο Βαλεντίνο, {name}! Σ’ αγαπώ ❤️',
+      '{name}, κάθε μέρα μαζί σου είναι γιορτή. Καλό Άγιο Βαλεντίνο!',
+      'Καλό Άγιο Βαλεντίνο, αγάπη μου! Είσαι το πιο όμορφο κομμάτι της ζωής μου. 💕',
+      '{name}, σ’ ευχαριστώ για κάθε χαμόγελο που μου χαρίζεις. Χρόνια πολλά! ❤️',
+      'Αν έπρεπε να διαλέξω ξανά, θα διάλεγα εσένα χωρίς δεύτερη σκέψη. Καλό Βαλεντίνο, {name}!',
+      'Χρόνια πολλά, {name}! Μαζί σου όλες οι μέρες έχουν χρώμα. 🌹',
+      'Καλό Άγιο Βαλεντίνο, {name}! Είσαι το σπίτι μου.',
+      '{name}, μου αρκεί ένα βλέμμα σου για να είναι καλή η μέρα. Σ’ αγαπώ! ❤️',
+      'Χρόνια πολλά, {name}! Ευχαριστώ που περπατάμε μαζί σε αυτή τη ζωή. 💑',
+      'Σήμερα, αύριο και πάντα: εσύ. Καλό Άγιο Βαλεντίνο, {name}! ❤️',
+      '{name}, είσαι η πιο ωραία μου «καλημέρα» και η πιο γλυκιά μου «καληνύχτα». 💕',
+      'Καλό Βαλεντίνο, {name}! Μαζί σου έμαθα τι σημαίνει αγάπη.',
+      'Χρόνια πολλά, αγάπη μου! Να γιορτάζουμε μαζί για πάντα. 🥂',
+      '{name}, δεν χρειάζομαι 14 Φεβρουαρίου για να σου πω ότι σ’ αγαπώ, αλλά σου το λέω και σήμερα! ❤️',
+      'Καλό Άγιο Βαλεντίνο, {name}! Ό,τι ωραίο έχω, το μοιράζομαι μαζί σου. 🌹',
+      'Για μένα κάθε μέρα είναι Άγιος Βαλεντίνος, {name}. Σ’ αγαπώ! 💖',
+      'h|Καλό Βαλεντίνο, {name}! Σ’ αγαπώ περισσότερο κι από τον πρωινό καφέ. ☕❤️',
+      'h|{name}, το τελευταίο κομμάτι σοκολάτας το κρατάω πάντα για σένα… σχεδόν πάντα! 🍫😄',
+      'h|Καλό Άγιο Βαλεντίνο, {name}! Με αντέχεις τόσα χρόνια, αξίζεις μετάλλιο. 🏅❤️',
+      'h|Χρόνια πολλά, {name}! Εσύ κι εγώ: η καλύτερη ομάδα, ακόμη κι όταν τσακωνόμαστε για το τηλεκοντρόλ. 😄'],
+  en:['Happy Valentine’s Day, {name}! I love you ❤️',
+      '{name}, every day with you is a celebration. Happy Valentine’s Day!',
+      'Happy Valentine’s Day, my love! You’re the best part of my life. 💕',
+      '{name}, thank you for every smile you give me. Happy Valentine’s! ❤️',
+      'If I had to choose again, I’d choose you every time. Happy Valentine’s Day, {name}!',
+      'Happy Valentine’s Day, {name}! With you, every day has colour. 🌹',
+      'Happy Valentine’s Day, {name}! You are my home.',
+      '{name}, one look from you makes my whole day. I love you! ❤️',
+      'Happy Valentine’s, {name}! Thank you for walking through life with me. 💑',
+      'Today, tomorrow and always: you. Happy Valentine’s Day, {name}! ❤️',
+      '{name}, you’re my favourite good morning and my sweetest good night. 💕',
+      'Happy Valentine’s Day, {name}! You taught me what love really means.',
+      'Happy Valentine’s, my love! Here’s to celebrating together forever. 🥂',
+      '{name}, I don’t need February 14th to say I love you, but I’ll say it today too! ❤️',
+      'Happy Valentine’s Day, {name}! Everything good I have, I share with you. 🌹',
+      'You’re my Valentine every single day, {name}. I love you! 💖',
+      'h|Happy Valentine’s Day, {name}! I love you more than my morning coffee. ☕❤️',
+      'h|{name}, I always save the last piece of chocolate for you… almost always! 🍫😄',
+      'h|Happy Valentine’s, {name}! You’ve put up with me all these years, you deserve a medal. 🏅❤️',
+      'h|Happy Valentine’s Day, {name}! You and me: the best team, even when we fight over the remote. 😄'],
+  pl:['Szczęśliwych Walentynek, {name}! Kocham Cię ❤️',
+      '{name}, każdy dzień z Tobą jest świętem. Szczęśliwych Walentynek!',
+      'Szczęśliwych Walentynek, kochanie! Jesteś najpiękniejszą częścią mojego życia. 💕',
+      '{name}, dziękuję za każdy uśmiech. Szczęśliwych Walentynek! ❤️',
+      'Za każdym razem wybieram Ciebie. Szczęśliwych Walentynek, {name}!',
+      'Szczęśliwych Walentynek, {name}! Z Tobą każdy dzień ma kolor. 🌹',
+      'Szczęśliwych Walentynek, {name}! Jesteś moim domem.',
+      '{name}, jedno Twoje spojrzenie i cały dzień jest lepszy. Kocham Cię! ❤️',
+      'Szczęśliwych Walentynek, {name}! Dziękuję, że idziemy przez życie razem. 💑',
+      'Dziś, jutro i zawsze: Ty. Szczęśliwych Walentynek, {name}! ❤️',
+      '{name}, jesteś moim ulubionym „dzień dobry” i najsłodszym „dobranoc”. 💕',
+      'Szczęśliwych Walentynek, {name}! Dzięki Tobie wiem, czym jest miłość.',
+      'Szczęśliwych Walentynek, kochanie! Świętujmy razem zawsze. 🥂',
+      '{name}, nie potrzebuję 14 lutego, żeby powiedzieć, że Cię kocham, ale mówię to także dziś! ❤️',
+      'Szczęśliwych Walentynek, {name}! Wszystkim, co najlepsze, dzielę się z Tobą. 🌹',
+      'Jesteś moją Walentynką każdego dnia, {name}. Kocham Cię! 💖',
+      'h|Szczęśliwych Walentynek, {name}! Kocham Cię bardziej niż poranną kawę. ☕❤️',
+      'h|{name}, ostatni kawałek czekolady zawsze zostawiam dla Ciebie… prawie zawsze! 🍫😄',
+      'h|Szczęśliwych Walentynek, {name}! Wytrzymujesz ze mną tyle lat, należy Ci się medal. 🏅❤️',
+      'h|Szczęśliwych Walentynek, {name}! Ty i ja: najlepsza drużyna, nawet gdy kłócimy się o pilota. 😄']},
+ love:{
+  el:['Καλημέρα, {name}! Σου εύχομαι μια όμορφη μέρα. Σε σκέφτομαι ❤️',
+      '{name}, ήθελα απλώς να σου πω πόσο χαίρομαι που σε έχω στη ζωή μου.',
+      'Να έχεις μια υπέροχη μέρα, {name}! Σ’ αγαπώ πολύ.',
+      'Σε σκέφτηκα και χαμογέλασα, {name}. Καλή σου μέρα! 😊',
+      '{name}, να προσέχεις τον εαυτό σου σήμερα. Είσαι πολύτιμο κομμάτι της ζωής μου.',
+      'Μια μικρή καλημέρα με πολλή αγάπη για σένα, {name} 🌞',
+      'Ευχαριστώ που είσαι πάντα δίπλα μου, {name}.',
+      'Καλημέρα, {name}! Ο καφές είναι πιο γλυκός όταν σε σκέφτομαι. ☕',
+      '{name}, ό,τι κι αν φέρει η μέρα, να θυμάσαι ότι είμαι εδώ για σένα.',
+      'Καλή δύναμη σήμερα, {name}! Θα τα πας τέλεια. 💪',
+      'Καληνύχτα, {name}! Όνειρα γλυκά. 🌙',
+      '{name}, μου λείπεις. Ανυπομονώ να σε δω!',
+      'Είσαι το καλύτερο κομμάτι της μέρας μου, {name}. ❤️',
+      'Καλημέρα στον πιο όμορφο άνθρωπο, {name}! 🌸',
+      '{name}, μην ξεχάσεις να φας και να ξεκουραστείς λίγο σήμερα. 😊',
+      'Μια αγκαλιά από μακριά για σένα, {name} 🤗',
+      '{name}, σε θαυμάζω. Το ξέρεις;',
+      'Καλό απόγευμα, {name}! Πώς πάει η μέρα σου;',
+      'Καλή εβδομάδα, {name}! Να είναι γεμάτη ωραία νέα. ✨',
+      'Καλό Σαββατοκύριακο, {name}! Ξεκουράσου και χαμογέλα. 🌿',
+      '{name}, ό,τι κι αν γίνει, εσύ κι εγώ μαζί. ❤️',
+      'Σ’ αγαπώ περισσότερο απ’ όσο λένε τα λόγια, {name}.',
+      'Καλημέρα, {name}! Σου στέλνω ένα χαμόγελο να το φοράς όλη μέρα. 😊',
+      '{name}, χαίρομαι για κάθε μέρα που μοιραζόμαστε.',
+      'Μια μικρή υπενθύμιση: είσαι υπέροχος άνθρωπος, {name}! 💛',
+      'Καληνύχτα, {name}. Αύριο θα είναι ακόμη καλύτερα. 🌙',
+      '{name}, σε σκέφτομαι και η μέρα μου φωτίζει. ☀️',
+      'Καλή επιτυχία σε ό,τι κάνεις σήμερα, {name}! 🍀',
+      '{name}, είσαι η αγαπημένη μου σκέψη. ❤️',
+      'Στείλε μου ένα χαμόγελο, {name}! Σε σκέφτομαι. 😊'],
+  en:['Good morning, {name}! Wishing you a lovely day. Thinking of you ❤️',
+      '{name}, I just wanted to say how glad I am to have you in my life.',
+      'Have a wonderful day, {name}! Love you lots.',
+      'Thought of you and smiled, {name}. Have a great day! 😊',
+      'A little hello with lots of love for you, {name} 🌞',
+      'Thank you for always being there for me, {name}.',
+      'Good morning, {name}! Coffee tastes sweeter when I think of you. ☕',
+      '{name}, whatever today brings, remember I’m here for you.',
+      'You’ve got this today, {name}! 💪',
+      'Good night, {name}! Sweet dreams. 🌙',
+      '{name}, I miss you. Can’t wait to see you!',
+      'You’re the best part of my day, {name}. ❤️',
+      'Good morning to the loveliest person, {name}! 🌸',
+      '{name}, don’t forget to eat and take a little break today. 😊',
+      'Sending you a big hug from afar, {name} 🤗',
+      '{name}, I admire you. Do you know that?',
+      'Good afternoon, {name}! How’s your day going?',
+      'Have a great week, {name}! May it be full of good news. ✨',
+      'Have a lovely weekend, {name}! Rest and smile. 🌿',
+      '{name}, whatever happens, it’s you and me. ❤️',
+      'I love you more than words can say, {name}.',
+      'Good morning, {name}! Here’s a smile for you to wear all day. 😊',
+      '{name}, I’m grateful for every day we share.',
+      'Just a reminder: you’re an amazing person, {name}! 💛',
+      'Good night, {name}. Tomorrow will be even better. 🌙',
+      '{name}, thinking of you lights up my day. ☀️',
+      'Good luck with everything today, {name}! 🍀',
+      '{name}, you’re my favourite thought. ❤️',
+      'Send me a smile, {name}! Thinking of you. 😊',
+      '{name}, life is better with you in it.'],
+  pl:['Dzień dobry, {name}! Życzę Ci pięknego dnia. Myślę o Tobie ❤️',
+      '{name}, cieszę się, że jesteś w moim życiu.',
+      'Miłego dnia, {name}! Bardzo Cię kocham.',
+      'Myślę o Tobie i się uśmiecham, {name}. Udanego dnia! 😊',
+      'Małe pozdrowienie z dużą dawką miłości dla Ciebie, {name} 🌞',
+      'Dziękuję, że zawsze jesteś przy mnie, {name}.',
+      'Dzień dobry, {name}! Kawa smakuje lepiej, gdy o Tobie myślę. ☕',
+      '{name}, cokolwiek przyniesie dzień, pamiętaj, że jestem tu dla Ciebie.',
+      'Dasz radę dzisiaj, {name}! 💪',
+      'Dobranoc, {name}! Słodkich snów. 🌙',
+      '{name}, tęsknię za Tobą. Nie mogę się doczekać, aż się zobaczymy!',
+      'Jesteś najlepszą częścią mojego dnia, {name}. ❤️',
+      'Dzień dobry najpiękniejszej osobie, {name}! 🌸',
+      '{name}, nie zapomnij dziś zjeść i trochę odpocząć. 😊',
+      'Mocno Cię przytulam na odległość, {name} 🤗',
+      '{name}, podziwiam Cię. Wiesz o tym?',
+      'Miłego popołudnia, {name}! Jak mija Ci dzień?',
+      'Udanego tygodnia, {name}! Niech będzie pełen dobrych wiadomości. ✨',
+      'Miłego weekendu, {name}! Odpocznij i uśmiechaj się. 🌿',
+      '{name}, cokolwiek się stanie, jesteśmy razem. ❤️',
+      'Kocham Cię bardziej, niż potrafię powiedzieć, {name}.',
+      'Dzień dobry, {name}! Przesyłam Ci uśmiech na cały dzień. 😊',
+      'Dziękuję za każdy wspólny dzień, {name}.',
+      'Małe przypomnienie: jesteś wspaniałą osobą, {name}! 💛',
+      'Dobranoc, {name}. Jutro będzie jeszcze lepiej. 🌙',
+      '{name}, myśl o Tobie rozjaśnia mi dzień. ☀️',
+      'Powodzenia we wszystkim dzisiaj, {name}! 🍀',
+      '{name}, jesteś moją ulubioną myślą. ❤️',
+      'Wyślij mi uśmiech, {name}! Myślę o Tobie. 😊',
+      '{name}, życie jest piękniejsze z Tobą.']}
+};
+const SIGN = {el:'— Στάλθηκε με 🎉 Onomio',en:'— Sent with 🎉 Onomio',pl:'— Wysłane z 🎉 Onomio'};
+
+/* ---------- Interface language ---------- */
+const I18N = {
+ el:{tag:'Γιορτές · Γενέθλια · Ευχές',proto:'Δοκιμαστική έκδοση. Τα πρόσωπα που βλέπεις στην αρχή είναι παραδείγματα· τα δεδομένα σου μένουν μόνο σε αυτή τη συσκευή.',
+  tabUp:'Επόμενα',tabPeople:'Πρόσωπα',tabSet:'Ρυθμίσεις',today:'Σήμερα',tomorrow:'Αύριο',week:'Αυτή την εβδομάδα',month:'Μέσα στον μήνα',later:'Αργότερα',
+  celebrate:'Γιορτάζουν:',noFeast:'Καμία μεγάλη ονομαστική εορτή στο εορτολόγιο σήμερα.',yours:'🎉 Από τα δικά σου πρόσωπα:',
+  freeBanner:'Η δωρεάν έκδοση κρατά έως <b>3 πρόσωπα</b>. Στη δοκιμαστική έκδοση τα βλέπεις όλα.',empty:'Πρόσθεσε το πρώτο σου πρόσωπο από την καρτέλα «Πρόσωπα».',
+  nPeople:'{n} πρόσωπα',sent:'✓ Στάλθηκε',freeUpTo3:' · δωρεάν έως 3',addPerson:'+ Νέο πρόσωπο',example:'παράδειγμα',noDates:'Χωρίς ημερομηνίες',edit:'Αλλαγή',
+  plan:'Πρόγραμμα',free:'Δωρεάν',premiumTrial:'Premium · δοκιμή',
+  freeDesc:'Έως 3 πρόσωπα, έτοιμες ευχές, υπογραφή «Στάλθηκε με 🎉 Onomio» στο τέλος κάθε μηνύματος.',
+  premDesc:'1,99 € / μήνα ή 14,99 € / έτος: απεριόριστα πρόσωπα, ευχές με AI, αποστολή σε όλους μαζί, χωρίς υπογραφή.',
+  reminders:'Υπενθυμίσεις',remTime:'Ώρα ειδοποίησης',remWhen:'Πότε να με ειδοποιεί',b0:'Την ίδια μέρα',b1:'1 μέρα πριν',b3:'3 μέρες πριν',b7:'1 εβδομάδα πριν',
+  remNote:'Στην κανονική εφαρμογή η ειδοποίηση έρχεται στο κινητό. Στη δοκιμαστική έκδοση αποθηκεύεται μόνο η επιλογή.',
+  remindWhat:'Τι θέλω να μου θυμίζει',cBday:'Γενέθλια',cNameday:'Ονομαστικές εορτές',cNewyear:'Πρωτοχρονιά',cXmas:'Χριστούγεννα',cEaster:'Πάσχα',cThanks:'Ευχαριστιών',cValentine:'Άγιος Βαλεντίνος',cLove:'Ευχές αγάπης',
+  myWishes:'Οι δικές μου ευχές',myWishesHelp:'Γράψε τη δική σου ευχή. Μπαίνει πρώτη στη θέση της έτοιμης. Το <b>{name}</b> γίνεται αυτόματα το όνομα του παραλήπτη.',
+  occasion:'Περίσταση',language:'Γλώσσα',myWish:'Η ευχή μου',myWishPh:'π.χ. Χρόνια πολλά, {name}! Να σε χαιρόμαστε πάντα.',saveWish:'Αποθήκευση ευχής',resetWish:'Επαναφορά έτοιμης',
+  look:'Εμφάνιση, γλώσσα και υπογραφή',appLang:'Γλώσσα εφαρμογής',auto:'Αυτόματα (από το κινητό)',mySig:'Δική μου υπογραφή στο τέλος των μηνυμάτων',sigPh:'π.χ. Με αγάπη, Θοδωρής',
+  freeSigNote:'Στη δωρεάν έκδοση μπαίνει η υπογραφή «{sig}».',
+  howHol:'Πώς δουλεύουν οι γιορτές',howHol1:'Κάθε παραλήπτης έχει τη δική του χώρα και γλώσσα. Η εφαρμογή βάζει τις γιορτές της χώρας του: ορθόδοξο ή καθολικό Πάσχα, Χριστούγεννα 25/12 ή 7/1, Ημέρα των Ευχαριστιών κ.λπ.',
+  howHol2:'Πάσχα {y}: καθολικό {w}, ορθόδοξο {o}. Υπολογίζονται αυτόματα κάθε χρόνο.',howHol3:'Εορτολόγια: Ελλάδα, Κύπρος, Πολωνία. Για τις άλλες χώρες βάζεις την ονομαστική εορτή με το χέρι.',
+  data:'Δεδομένα',dataNote:'Τα πρόσωπα μένουν μόνο σε αυτή τη συσκευή. Δεν στέλνονται πουθενά.',privacy:'Πολιτική απορρήτου',contact:'Επικοινωνία',
+  resetEx:'Επαναφορά παραδειγμάτων',confirmAgain:'Πάτα ξανά για επιβεβαίωση',
+  saved:'Αποθηκεύτηκε',writeFirst:'Γράψε πρώτα την ευχή',wishSaved:'Η ευχή σου αποθηκεύτηκε',wishReset:'Επανήλθε η έτοιμη ευχή',examplesBack:'Επανήλθαν τα παραδείγματα',
+  todayLow:'σήμερα',wishLang:'Γλώσσα ευχής',tone:'Ύφος',another:'↻ Άλλη ευχή',msgTo:'Μήνυμα προς {name}',sigHint:'Στο τέλος μπαίνει: «{sig}». Φεύγει με το Premium.',
+  copy:'Αντιγραφή',copyHint:'Αν δεν ανοίξει η εφαρμογή, πάτα «Αντιγραφή» και επικόλλησε το μήνυμα.',close:'Κλείσιμο',toAll:'Σε όλους',iSent:'Το έστειλα ✓',
+  copied:'Αντιγράφηκε',selected:'Επίλεξα το κείμενο: πάτα Αντιγραφή από το μενού',aiSoon:'Η προσωπική ευχή με AI έρχεται στην κανονική εφαρμογή',premiumOnly:'Διαθέσιμο στο Premium',
+  allPremium:'Η αποστολή σε όλους μαζί είναι στο Premium',allMarked:'Σημειώθηκαν όλοι ως σταλμένοι',nextP:'Επόμενος: {name}',allDone:'Μπράβο! Όλες οι ευχές στάλθηκαν',
+  newP:'Νέο πρόσωπο',editP:'Αλλαγή προσώπου',name:'Όνομα',namePh:'π.χ. Γιώργος',rel:'Σχέση',relPh:'π.χ. Αδελφή',country:'Χώρα παραλήπτη',wishLang2:'Γλώσσα ευχών',
+  bdayL:'Γενέθλια',ndL:'Ονομαστική εορτή (αν δεν βρεθεί μόνη της)',loveL:'💌 Ευχές αγάπης',weekday:'Ημέρα της εβδομάδας',partner:'Σύντροφος / σύζυγος (υπενθύμιση για τον Άγιο Βαλεντίνο)',
+  phone:'Κινητό (προαιρετικό)',email:'Email (προαιρετικό)',del:'Διαγραφή',sure:'Σίγουρα;',cancel:'Άκυρο',save:'Αποθήκευση',
+  hintManual:'Θα χρησιμοποιηθεί η ημερομηνία που έβαλες.',hintFound:'Βρέθηκε ονομαστική εορτή: {d}',hintNotInCal:'Το όνομα δεν υπάρχει στο εορτολόγιο. Βάλε την ημερομηνία με το χέρι.',
+  hintNoCal:'Για αυτή τη χώρα δεν έχουμε ακόμη εορτολόγιο. Αν γιορτάζει, βάλε την ημερομηνία με το χέρι.',deleted:'Διαγράφηκε',added:'Προστέθηκε',
+  lf_:'Όχι',lf_daily:'Κάθε μέρα',lf_weekly:'Μία φορά την εβδομάδα',lf_monthly:'Μία φορά τον μήνα',
+  t_birthday:'Γενέθλια',t_nameday:'Ονομαστική εορτή',t_newyear:'Πρωτοχρονιά',t_christmas:'Χριστούγεννα',t_christmas_j:'Χριστούγεννα (7 Ιανουαρίου)',t_wigilia:'Wigilia · Χριστούγεννα Πολωνίας',
+  t_easter_o:'Πάσχα (Ορθόδοξο)',t_easter_w:'Πάσχα (Καθολικό / Προτεσταντικό)',t_thanks_us:'Ημέρα των Ευχαριστιών (ΗΠΑ)',t_thanks_ca:'Ημέρα των Ευχαριστιών (Καναδάς)',t_valentine:'Άγιος Βαλεντίνος',t_love:'Ευχή αγάπης',t_thanksgiving:'Ημέρα των Ευχαριστιών',
+  tn_auto:'Αυτόματο',tn_w:'Ζεστό',tn_f:'Επίσημο',tn_h:'Χιουμοριστικό',ac_pink:'Ροζ',ac_violet:'Μωβ',ac_mint:'Τιρκουάζ',ac_sun:'Χρυσό',
+  inDay:'σε {n} μέρα',inDays:'σε {n} μέρες'},
+ en:{tag:'Name days · Birthdays · Wishes',proto:'Test version. The people you see at first are examples; your data stays on this device only.',
+  tabUp:'Upcoming',tabPeople:'People',tabSet:'Settings',today:'Today',tomorrow:'Tomorrow',week:'This week',month:'This month',later:'Later',
+  celebrate:'Name days:',noFeast:'No major name days in the calendar today.',yours:'🎉 From your people:',
+  freeBanner:'The free version keeps up to <b>3 people</b>. In the test version you see them all.',empty:'Add your first person in the “People” tab.',
+  nPeople:'{n} people',sent:'✓ Sent',freeUpTo3:' · free up to 3',addPerson:'+ Add person',example:'example',noDates:'No dates',edit:'Edit',
+  plan:'Plan',free:'Free',premiumTrial:'Premium · trial',
+  freeDesc:'Up to 3 people, ready wishes, and the signature “Sent with 🎉 Onomio” at the end of each message.',
+  premDesc:'1.99 € / month or 14.99 € / year: unlimited people, AI wishes, send to everyone at once, no signature.',
+  reminders:'Reminders',remTime:'Reminder time',remWhen:'When to remind me',b0:'On the day',b1:'1 day before',b3:'3 days before',b7:'1 week before',
+  remNote:'In the full app the reminder arrives as a phone notification. In the test version only the setting is saved.',
+  remindWhat:'What to remind me of',cBday:'Birthdays',cNameday:'Name days',cNewyear:'New Year',cXmas:'Christmas',cEaster:'Easter',cThanks:'Thanksgiving',cValentine:'Valentine’s Day',cLove:'Love notes',
+  myWishes:'My own wishes',myWishesHelp:'Write your own wish. It comes first, before the ready ones. <b>{name}</b> is replaced by the recipient’s name.',
+  occasion:'Occasion',language:'Language',myWish:'My wish',myWishPh:'e.g. Happy birthday, {name}! We love you.',saveWish:'Save wish',resetWish:'Back to ready wish',
+  look:'Look, language and signature',appLang:'App language',auto:'Automatic (from phone)',mySig:'My own signature at the end of messages',sigPh:'e.g. With love, Theo',
+  freeSigNote:'The free version adds the signature “{sig}”.',
+  howHol:'How holidays work',howHol1:'Each recipient has their own country and language. The app uses that country’s holidays: Orthodox or Western Easter, Christmas on 25 Dec or 7 Jan, Thanksgiving and so on.',
+  howHol2:'Easter {y}: Western {w}, Orthodox {o}. Calculated automatically every year.',howHol3:'Name-day calendars: Greece, Cyprus, Poland. For other countries, enter the name day yourself.',
+  data:'Data',dataNote:'Your people stay on this device only. Nothing is sent anywhere.',privacy:'Privacy policy',contact:'Contact',
+  resetEx:'Restore examples',confirmAgain:'Tap again to confirm',
+  saved:'Saved',writeFirst:'Write the wish first',wishSaved:'Your wish was saved',wishReset:'Ready wish restored',examplesBack:'Examples restored',
+  todayLow:'today',wishLang:'Wish language',tone:'Tone',another:'↻ Another wish',msgTo:'Message to {name}',sigHint:'Added at the end: “{sig}”. Removed with Premium.',
+  copy:'Copy',copyHint:'If the app doesn’t open, tap “Copy” and paste the message.',close:'Close',toAll:'To everyone',iSent:'I sent it ✓',
+  copied:'Copied',selected:'Text selected: use Copy from the menu',aiSoon:'Personal AI wishes are coming in the full app',premiumOnly:'Available in Premium',
+  allPremium:'Sending to everyone at once is in Premium',allMarked:'Everyone marked as sent',nextP:'Next: {name}',allDone:'Well done! All wishes sent',
+  newP:'New person',editP:'Edit person',name:'Name',namePh:'e.g. Anna',rel:'Relationship',relPh:'e.g. Sister',country:'Recipient’s country',wishLang2:'Wish language',
+  bdayL:'Birthday',ndL:'Name day (if not found automatically)',loveL:'💌 Love notes',weekday:'Day of the week',partner:'Partner / spouse (Valentine’s Day reminder)',
+  phone:'Mobile (optional)',email:'Email (optional)',del:'Delete',sure:'Sure?',cancel:'Cancel',save:'Save',
+  hintManual:'The date you entered will be used.',hintFound:'Name day found: {d}',hintNotInCal:'This name isn’t in the calendar. Enter the date yourself.',
+  hintNoCal:'We don’t have a name-day calendar for this country yet. If they celebrate, enter the date yourself.',deleted:'Deleted',added:'Added',
+  lf_:'No',lf_daily:'Every day',lf_weekly:'Once a week',lf_monthly:'Once a month',
+  t_birthday:'Birthday',t_nameday:'Name day',t_newyear:'New Year',t_christmas:'Christmas',t_christmas_j:'Christmas (7 January)',t_wigilia:'Wigilia · Polish Christmas Eve',
+  t_easter_o:'Easter (Orthodox)',t_easter_w:'Easter (Western)',t_thanks_us:'Thanksgiving (US)',t_thanks_ca:'Thanksgiving (Canada)',t_valentine:'Valentine’s Day',t_love:'Love note',t_thanksgiving:'Thanksgiving',
+  tn_auto:'Automatic',tn_w:'Warm',tn_f:'Formal',tn_h:'Funny',ac_pink:'Pink',ac_violet:'Violet',ac_mint:'Teal',ac_sun:'Gold',
+  inDay:'in {n} day',inDays:'in {n} days'},
+ pl:{tag:'Imieniny · Urodziny · Życzenia',proto:'Wersja testowa. Osoby widoczne na początku to przykłady; Twoje dane zostają tylko na tym urządzeniu.',
+  tabUp:'Nadchodzące',tabPeople:'Osoby',tabSet:'Ustawienia',today:'Dzisiaj',tomorrow:'Jutro',week:'W tym tygodniu',month:'W tym miesiącu',later:'Później',
+  celebrate:'Imieniny:',noFeast:'Dziś brak ważnych imienin w kalendarzu.',yours:'🎉 Twoje osoby:',
+  freeBanner:'Wersja darmowa obejmuje do <b>3 osób</b>. W wersji testowej widzisz wszystkie.',empty:'Dodaj pierwszą osobę w zakładce „Osoby”.',
+  nPeople:'Osoby: {n}',sent:'✓ Wysłano',freeUpTo3:' · za darmo do 3',addPerson:'+ Dodaj osobę',example:'przykład',noDates:'Brak dat',edit:'Edytuj',
+  plan:'Plan',free:'Darmowy',premiumTrial:'Premium · próba',
+  freeDesc:'Do 3 osób, gotowe życzenia i podpis „Wysłane z 🎉 Onomio” na końcu każdej wiadomości.',
+  premDesc:'1,99 € / miesiąc lub 14,99 € / rok: bez limitu osób, życzenia z AI, wysyłka do wszystkich naraz, bez podpisu.',
+  reminders:'Przypomnienia',remTime:'Godzina przypomnienia',remWhen:'Kiedy przypominać',b0:'W dniu wydarzenia',b1:'1 dzień wcześniej',b3:'3 dni wcześniej',b7:'Tydzień wcześniej',
+  remNote:'W pełnej aplikacji przypomnienie przyjdzie jako powiadomienie. W wersji testowej zapisuje się tylko ustawienie.',
+  remindWhat:'O czym przypominać',cBday:'Urodziny',cNameday:'Imieniny',cNewyear:'Nowy Rok',cXmas:'Boże Narodzenie',cEaster:'Wielkanoc',cThanks:'Święto Dziękczynienia',cValentine:'Walentynki',cLove:'Liściki miłosne',
+  myWishes:'Moje życzenia',myWishesHelp:'Napisz własne życzenia. Pojawią się jako pierwsze. <b>{name}</b> zostanie zastąpione imieniem odbiorcy.',
+  occasion:'Okazja',language:'Język',myWish:'Moje życzenie',myWishPh:'np. Sto lat, {name}! Kochamy Cię.',saveWish:'Zapisz życzenie',resetWish:'Przywróć gotowe',
+  look:'Wygląd, język i podpis',appLang:'Język aplikacji',auto:'Automatycznie (z telefonu)',mySig:'Mój podpis na końcu wiadomości',sigPh:'np. Z miłością, Teo',
+  freeSigNote:'Wersja darmowa dodaje podpis „{sig}”.',
+  howHol:'Jak działają święta',howHol1:'Każdy odbiorca ma swój kraj i język. Aplikacja stosuje święta tego kraju: prawosławną lub katolicką Wielkanoc, Boże Narodzenie 25.12 lub 7.01, Święto Dziękczynienia itd.',
+  howHol2:'Wielkanoc {y}: katolicka {w}, prawosławna {o}. Obliczane automatycznie co roku.',howHol3:'Kalendarze imienin: Grecja, Cypr, Polska. Dla innych krajów wpisz imieniny ręcznie.',
+  data:'Dane',dataNote:'Twoje osoby zostają tylko na tym urządzeniu. Nic nie jest nigdzie wysyłane.',privacy:'Polityka prywatności',contact:'Kontakt',
+  resetEx:'Przywróć przykłady',confirmAgain:'Dotknij ponownie, aby potwierdzić',
+  saved:'Zapisano',writeFirst:'Najpierw napisz życzenie',wishSaved:'Życzenie zapisane',wishReset:'Przywrócono gotowe życzenie',examplesBack:'Przywrócono przykłady',
+  todayLow:'dzisiaj',wishLang:'Język życzeń',tone:'Styl',another:'↻ Inne życzenie',msgTo:'Wiadomość do: {name}',sigHint:'Na końcu dodawany jest podpis: „{sig}”. Znika w wersji Premium.',
+  copy:'Kopiuj',copyHint:'Jeśli aplikacja się nie otworzy, dotknij „Kopiuj” i wklej wiadomość.',close:'Zamknij',toAll:'Do wszystkich',iSent:'Wysłane ✓',
+  copied:'Skopiowano',selected:'Tekst zaznaczony: użyj Kopiuj z menu',aiSoon:'Osobiste życzenia z AI pojawią się w pełnej aplikacji',premiumOnly:'Dostępne w Premium',
+  allPremium:'Wysyłka do wszystkich naraz jest w Premium',allMarked:'Wszyscy oznaczeni jako wysłane',nextP:'Następna osoba: {name}',allDone:'Brawo! Wszystkie życzenia wysłane',
+  newP:'Nowa osoba',editP:'Edytuj osobę',name:'Imię',namePh:'np. Anna',rel:'Relacja',relPh:'np. Siostra',country:'Kraj odbiorcy',wishLang2:'Język życzeń',
+  bdayL:'Urodziny',ndL:'Imieniny (jeśli nie znaleziono automatycznie)',loveL:'💌 Liściki miłosne',weekday:'Dzień tygodnia',partner:'Partner / małżonek (przypomnienie o Walentynkach)',
+  phone:'Telefon (opcjonalnie)',email:'E-mail (opcjonalnie)',del:'Usuń',sure:'Na pewno?',cancel:'Anuluj',save:'Zapisz',
+  hintManual:'Zostanie użyta wpisana data.',hintFound:'Znaleziono imieniny: {d}',hintNotInCal:'Tego imienia nie ma w kalendarzu. Wpisz datę ręcznie.',
+  hintNoCal:'Nie mamy jeszcze kalendarza imienin dla tego kraju. Jeśli obchodzą, wpisz datę ręcznie.',deleted:'Usunięto',added:'Dodano',
+  lf_:'Nie',lf_daily:'Codziennie',lf_weekly:'Raz w tygodniu',lf_monthly:'Raz w miesiącu',
+  t_birthday:'Urodziny',t_nameday:'Imieniny',t_newyear:'Nowy Rok',t_christmas:'Boże Narodzenie',t_christmas_j:'Boże Narodzenie (7 stycznia)',t_wigilia:'Wigilia',
+  t_easter_o:'Wielkanoc (prawosławna)',t_easter_w:'Wielkanoc',t_thanks_us:'Święto Dziękczynienia (USA)',t_thanks_ca:'Święto Dziękczynienia (Kanada)',t_valentine:'Walentynki',t_love:'Liścik miłosny',t_thanksgiving:'Święto Dziękczynienia',
+  tn_auto:'Automatyczny',tn_w:'Ciepły',tn_f:'Oficjalny',tn_h:'Zabawny',ac_pink:'Różowy',ac_violet:'Fioletowy',ac_mint:'Turkusowy',ac_sun:'Złoty',
+  inDay:'za {n} dzień',inDays:'za {n} dni'}
+};
+const DEVICE_LANG=(()=>{const l=((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase();return l.startsWith('el')?'el':l.startsWith('pl')?'pl':l.startsWith('bg')?'bg':l.startsWith('ro')?'ro':l.startsWith('lv')?'lv':l.startsWith('sr')?(l.includes('latn')?'srl':'sr'):'en';})();
+let UI='en';
+const t=(k,v={})=>{let s=(I18N[UI][k]??I18N.en[k]??k);for(const[a,b]of Object.entries(v))s=s.replaceAll('{'+a+'}',b);return s;};
+const LOCALE={el:'el-GR',en:'en-GB',pl:'pl-PL'};
+let fmt=new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'numeric',month:'long'});
+let WEEKDAYS=[];
+function setUI(lang){
+  UI=lang;document.documentElement.lang=lang;
+  fmt=new Intl.DateTimeFormat(LOCALE[lang],{weekday:'short',day:'numeric',month:'long'});
+  const wf=new Intl.DateTimeFormat(LOCALE[lang],{weekday:'long'});
+  WEEKDAYS=[...Array(7)].map((_,i)=>{const s=wf.format(new Date(2024,0,7+i));return s[0].toUpperCase()+s.slice(1);});
+  for(const k of Object.keys(TYPES)) TYPES[k].t=t('t_'+k);
+  const set=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt;};
+  set('ui-tag',t('tag'));set('ui-proto',t('proto'));set('tab-upcoming',t('tabUp'));set('tab-people',t('tabPeople'));set('tab-settings',t('tabSet'));
+}
+
+/* ---------- Countries (every ISO country, names in the interface language) ---------- */
+const ALL_CC='AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CD CF CG CH CI CK CL CM CN CO CR CU CV CW CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SI SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WS XK YE YT ZA ZM ZW'.split(' ');
+const TOP_CC=['GR','CY','RO','BG','RS','LV','PL','GB','IE','US','CA','AU','DE'];
+function countryName(cc){try{return new Intl.DisplayNames([LOCALE[UI]],{type:'region'}).of(cc)||cc;}catch(e){return cc;}}
+function countryOptions(sel){
+  const coll=new Intl.Collator(LOCALE[UI]);
+  const rest=ALL_CC.filter(c=>!TOP_CC.includes(c)).map(c=>[c,countryName(c)]).sort((a,b)=>coll.compare(a[1],b[1]));
+  const opt=([c,n])=>`<option value="${c}"${c===sel?' selected':''}>${esc(n)}</option>`;
+  return `<optgroup label="★">${TOP_CC.map(c=>opt([c,countryName(c)])).join('')}</optgroup><optgroup label="A–Z">${rest.map(opt).join('')}</optgroup>`;
+}
+const COUNTRY_LANG=c=>(c==='GR'||c==='CY')?'el':c==='PL'?'pl':c==='BG'?'bg':(c==='RO'||c==='MD')?'ro':c==='LV'?'lv':c==='RS'?'sr':c==='ME'?'srl':'en';
+const NAMEDAY_CC=new Set(['GR','CY','PL','BG','RO','LV','RS','ME']);
+
+/* Holidays depend on the recipient's country */
+const EASTER_O=new Set('GR CY RO BG RS MK ME GE MD UA RU BY'.split(' '));
+const XMAS_JULIAN=new Set('RS ME GE MK RU BY'.split(' '));
+const CHRISTIAN=new Set([...EASTER_O,...'PL AD AL AM AT BA BE CH CZ DE DK EE ES FI FO FR GI GL HR HU IE IS IT LI LT LU LV MC MT NL NO PT SE SI SK SM VA GB IM JE GG AX US CA MX GT BZ SV HN NI CR PA CU DO HT JM TT BS BB PR AG DM GD KN LC VC AR BO BR CL CO EC PY PE UY VE SR GY AU NZ PG FJ SB VU WS TO PH TL ZA NA BW ZW ZM KE UG TZ RW BI GH NG CM CD CG AO MZ MW LS SZ MG SC CV ST GQ GA LB'.split(' ')]);
+function holidaysFor(c){
+  const h=['newyear'];
+  if(c==='PL')h.push('wigilia');else if(XMAS_JULIAN.has(c))h.push('christmas_j');else if(CHRISTIAN.has(c))h.push('christmas');
+  if(EASTER_O.has(c))h.push('easter_o');else if(CHRISTIAN.has(c))h.push('easter_w');
+  if(c==='RO'||c==='MD')h.push('martisor');if(c==='LV')h.push('ligo');
+  if(c==='US')h.push('thanks_us');if(c==='CA')h.push('thanks_ca');
+  return h;
+}
+
+const TYPES = {
+ birthday:{ic:'🎂',cls:'t-birthday',w:'birthday'},
+ nameday:{ic:'🌸',cls:'t-nameday',w:'nameday'},
+ newyear:{ic:'🥂',cls:'t-holiday',w:'newyear'},
+ christmas:{ic:'🎄',cls:'t-holiday',w:'christmas'},
+ christmas_j:{ic:'🎄',cls:'t-holiday',w:'christmas'},
+ wigilia:{ic:'🎄',cls:'t-holiday',w:'christmas'},
+ easter_o:{ic:'🕯️',cls:'t-holiday',w:'easter_o'},
+ easter_w:{ic:'🐣',cls:'t-holiday',w:'easter_w'},
+ thanks_us:{ic:'🦃',cls:'t-holiday',w:'thanksgiving'},
+ thanks_ca:{ic:'🍁',cls:'t-holiday',w:'thanksgiving'},
+ valentine:{ic:'❤️',cls:'t-love',w:'valentine'},
+ love:{ic:'💌',cls:'t-love',w:'love'}
+};
+const LOVE_KEYS=['','daily','weekly','monthly'];
+
+/* ---------- Dates ---------- */
+const NOW = new Date(); const T0 = new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate()); const Y = T0.getFullYear();
+const addDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+function westernEaster(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+ h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),n=h+l-7*m+114;
+ return new Date(y,Math.floor(n/31)-1,(n%31)+1);}
+function orthodoxEaster(y){const a=y%4,b=y%7,c=y%19,d=(19*c+15)%30,e=(2*a+4*b-d+34)%7,n=d+e+114;
+ return addDays(new Date(y,Math.floor(n/31)-1,(n%31)+1),13);}
+function nthWeekday(y,month,weekday,n){const first=new Date(y,month,1);const off=(weekday-first.getDay()+7)%7;return new Date(y,month,1+off+7*(n-1));}
+const HOLIDAY_FN = {
+ newyear:y=>new Date(y,0,1), christmas:y=>new Date(y,11,25), christmas_j:y=>new Date(y,0,7), wigilia:y=>new Date(y,11,24),
+ easter_o:orthodoxEaster, easter_w:westernEaster, valentine:y=>new Date(y,1,14),
+ thanks_us:y=>nthWeekday(y,10,4,4), thanks_ca:y=>nthWeekday(y,9,1,2)};
+const fixedFn = mmdd=>{const [m,d]=mmdd.split('-').map(Number);return y=>new Date(y,m-1,d);};
+function nextBy(fn){let d=fn(Y);if(d<T0)d=fn(Y+1);return d;}
+const days = d=>Math.round((d-T0)/864e5);
+const iso = d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const inDays=n=>t(n===1?'inDay':'inDays',{n});
+
+/* ---------- Name-day lookup ---------- */
+const norm = s=>(s||'').trim().split(/\s+/)[0].normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/ς/g,'σ').replace(/ł/g,'l');
+function lookupNameday(name,country){
+  const cal = country==='PL'?PL_CAL:country==='BG'?BG_CAL:country==='RO'?RO_CAL:country==='LV'?LV_CAL:(country==='RS'||country==='ME')?SR_CAL:(country==='GR'||country==='CY')?GR_CAL:null; if(!cal) return null;
+  const k=norm(name);
+  for(const [mmdd,names,rule] of cal){ if(names.some(n=>norm(n)===k)) return {mmdd,rule}; }
+  return null;
+}
+function namedayFn(p){
+  if(p.nameday) return fixedFn(p.nameday);
+  const hit=lookupNameday(p.name,p.country); if(!hit) return null;
+  if(hit.rule==='palm') return y=>addDays(orthodoxEaster(y),-7);
+  const base=fixedFn(hit.mmdd);
+  if(hit.rule==='george') return y=>{const g=base(y),e=orthodoxEaster(y);return g<e?addDays(e,1):g;};
+  return base;
+}
+
+/* ---------- State ---------- */
+const SAMPLES = {
+ el:[
+  {id:'p1',name:'Μαρία',rel:'Σύζυγος',country:'GR',lang:'el',bday:'03-14',partner:true,love:'daily',loveDay:5},
+  {id:'p2',name:'Μιχάλης',rel:'Κουμπάρος',country:'GR',lang:'el',bday:'02-02'},
+  {id:'p3',name:'Ελένη',rel:'Μητέρα',country:'GR',lang:'el',bday:'06-30'},
+  {id:'p4',name:'Νίκος',rel:'Αδελφός',country:'CY',lang:'el',bday:'09-03'},
+  {id:'p5',name:'Piotr',rel:'Φίλος',country:'PL',lang:'pl',bday:'11-19'},
+  {id:'p6',name:'Sarah',rel:'Συνεργάτιδα',country:'US',lang:'en',bday:'12-12'}],
+ en:[
+  {id:'p1',name:'Emma',rel:'Wife',country:'GB',lang:'en',bday:'03-14',partner:true,love:'daily',loveDay:5},
+  {id:'p2',name:'Michael',rel:'Best friend',country:'US',lang:'en',bday:'02-02'},
+  {id:'p3',name:'Liam',rel:'Brother',country:'IE',lang:'en',bday:'09-03'},
+  {id:'p4',name:'Ελένη',rel:'Friend in Greece',country:'GR',lang:'el',bday:'06-30'},
+  {id:'p5',name:'Piotr',rel:'Friend',country:'PL',lang:'pl',bday:'11-19'},
+  {id:'p6',name:'Sarah',rel:'Colleague',country:'CA',lang:'en',bday:'12-12'}],
+ pl:[
+  {id:'p1',name:'Anna',rel:'Żona',country:'PL',lang:'pl',bday:'03-14',partner:true,love:'daily',loveDay:5},
+  {id:'p2',name:'Michał',rel:'Przyjaciel',country:'PL',lang:'pl',bday:'02-02'},
+  {id:'p3',name:'Jan',rel:'Tata',country:'PL',lang:'pl',bday:'06-30'},
+  {id:'p4',name:'Krzysztof',rel:'Brat',country:'PL',lang:'pl',bday:'09-03'},
+  {id:'p5',name:'Ελένη',rel:'Koleżanka z Grecji',country:'GR',lang:'el',bday:'11-19'},
+  {id:'p6',name:'Sarah',rel:'Współpracowniczka',country:'US',lang:'en',bday:'12-12'}]
+};
+/* ---------- Bulgarian: name-day calendar, wishes, interface ---------- */
+const BG_CAL = [
+ ['01-01',['Васил','Василка','Веселин','Веселина']],
+ ['01-06',['Йордан','Йорданка','Богдан','Богдана','Божидар','Божидара']],
+ ['01-07',['Иван','Иванка','Йоан','Йоана','Ваня','Иво']],
+ ['01-17',['Антон','Антония','Тони']],
+ ['01-18',['Атанас','Атанаска','Наско','Тана']],
+ ['02-01',['Трифон','Трифонка']],
+ ['02-10',['Харалампи','Валентин','Валентина']],
+ ['03-25',['Благой','Блага','Благовест','Благовеста']],
+ ['00-00',['Цветан','Цветана','Цветелина','Лиляна','Лили','Виолета','Роза','Ружа','Иглика','Калина','Ясен','Ясмина','Невена','Здравко','Здравка'],'palm'],
+ ['05-06',['Георги','Гергана','Галина','Гошо','Жоро']],
+ ['05-11',['Кирил','Методий']],
+ ['05-21',['Константин','Костадин','Елена','Еленка','Лена']],
+ ['06-29',['Петър','Петя','Павел','Павлина']],
+ ['07-20',['Илия','Илиян','Илияна']],
+ ['08-15',['Мария','Мариана','Марин','Мариела','Марияна','Мара']],
+ ['09-17',['София','Вяра','Надежда','Надя','Любов','Люба']],
+ ['10-14',['Петко','Петкана','Параскева']],
+ ['10-26',['Димитър','Димитрина','Митко','Димо','Митра']],
+ ['11-08',['Михаил','Михаела','Гаврил','Ангел','Ангелина','Рафаил']],
+ ['11-24',['Екатерина','Катерина','Катя']],
+ ['11-30',['Андрей','Андреа','Андриан']],
+ ['12-04',['Варвара']],
+ ['12-06',['Никола','Николай','Никол','Николина']],
+ ['12-20',['Игнат','Игнатий']],
+ ['12-25',['Христо','Христина','Кристиан','Кристина']],
+ ['12-27',['Стефан','Стефка','Стефания','Стоян','Стоянка']]
+];
+const BG_WISHES = {
+ birthday:['Честит рожден ден, {name}! Желая ти здраве, щастие и много любов. 🎂',
+  'Честит рожден ден, {name}! Нека всичките ти мечти се сбъднат. 🎉',
+  'Много здраве, усмивки и късмет, {name}! Честит рожден ден!',
+  'Честит празник, {name}! Нека новата година от живота ти бъде най-хубавата досега. 🎈',
+  '{name}, честит рожден ден! Пожелавам ти много радост и прекрасни мигове.',
+  'Наздраве за теб, {name}! Честит рожден ден! 🥂',
+  'Честит рожден ден, {name}! Благодаря, че те има в живота ми.',
+  'f|Честит рожден ден, {name}! Пожелавам Ви здраве, лично щастие и професионални успехи.',
+  'f|Сърдечни поздрави за рождения Ви ден, {name}! Бъдете здрави!',
+  'h|Честит рожден ден, {name}! Не брой годините, брой усмивките. 😄🎂',
+  'h|{name}, не остаряваш, просто минаваш на следващо ниво! Честит рожден ден! 🎮'],
+ nameday:['Честит имен ден, {name}! Много здраве, щастие и късмет!',
+  'Честит имен ден, {name}! Носи името си с гордост и радост. 🌸',
+  '{name}, честит празник! Пожелавам ти здраве и много радост.',
+  'Честит имен ден, {name}! Нека светецът те пази винаги.',
+  'Наздраве за имения ти ден, {name}! 🥂',
+  'Честит имен ден, {name}! Нека всеки ден ти носи усмивки.',
+  'f|Честит имен ден, {name}! Пожелавам Ви здраве и благополучие.',
+  'f|Сърдечни поздравления по случай имения Ви ден, {name}!',
+  'h|Честит имен ден, {name}! Днес ти черпиш, такава е традицията! 😄',
+  'h|{name}, честит имен ден! Телефонът ти днес ще прегрее. 📱🔥'],
+ newyear:['Честита Нова година, {name}! Здраве, щастие и успехи през {year}!',
+  'Весело посрещане на {year}, {name}! Нека годината е пълна с радост. ✨',
+  'Честита Нова {year} година, {name}! Много любов и късмет!',
+  'Наздраве за {year}, {name}! Нека бъде най-добрата година досега. 🥂',
+  'f|Честита Нова година, {name}! Пожелавам Ви здраве и успехи през {year}.',
+  'f|Весели празници и успешна {year} година, {name}! Благодарим Ви за сътрудничеството.',
+  'h|Честита Нова година, {name}! Дано късметчето в баницата е за теб! 😄'],
+ christmas:['Весела Коледа, {name}! Топли празници с най-близките. 🎄',
+  'Честито Рождество Христово, {name}! Мир, здраве и радост в дома ти.',
+  'Весела Коледа и светли празници, {name}! ✨',
+  'Весели празници, {name}! Нека Коледа донесе спокойствие и обич.',
+  'f|Весела Коледа, {name}! Пожелавам Ви спокойни празници и здраве на цялото семейство.',
+  'f|Честити празници, {name}! Благодарим Ви за доверието.',
+  'h|Весела Коледа, {name}! По празниците калориите не се броят! 🍪😄'],
+ easter_o:['Христос воскресе, {name}! Честит Великден! 🥚',
+  'Честит Великден, {name}! Здраве, мир и радост за цялото семейство.',
+  'Христос воскресе! Светли празници, {name}! 🕯️',
+  'f|Честит Великден, {name}! Пожелавам Ви здраве и светли празници.',
+  'h|Честит Великден, {name}! Нека твоето яйце е най-здравото при чукането! 🥚😄'],
+ valentine:['Честит Свети Валентин, {name}! Обичам те ❤️',
+  '{name}, всеки ден с теб е празник. Честит Свети Валентин!',
+  'Честит празник, любов моя! Ти си най-хубавото в живота ми. 💕',
+  '{name}, благодаря ти за всяка усмивка. Обичам те! ❤️',
+  'Днес, утре и винаги: ти. Честит Свети Валентин, {name}! ❤️',
+  'Честит Свети Валентин, {name}! С теб всеки ден има цвят. 🌹',
+  'Ти си моят дом, {name}. Честит Свети Валентин!',
+  '{name}, не ми трябва 14 февруари, за да ти кажа, че те обичам, но го казвам и днес! ❤️',
+  'Честит Свети Валентин и Трифон Зарезан, {name}! Наздраве за любовта! 🍷',
+  'h|Честит Свети Валентин, {name}! Обичам те повече от сутрешното кафе. ☕❤️',
+  'h|{name}, последното парче шоколад винаги го пазя за теб… почти винаги! 🍫😄',
+  'h|Честит празник, {name}! Търпиш ме толкова години, заслужаваш медал. 🏅❤️'],
+ love:['Добро утро, {name}! Желая ти прекрасен ден. Мисля за теб ❤️',
+  '{name}, просто исках да ти кажа колко се радвам, че те има.',
+  'Хубав ден, {name}! Обичам те много.',
+  'Помислих за теб и се усмихнах, {name}. 😊',
+  'Благодаря ти, че винаги си до мен, {name}.',
+  'Добро утро, {name}! Кафето е по-сладко, когато мисля за теб. ☕',
+  '{name}, каквото и да донесе денят, помни, че съм тук за теб.',
+  'Успех днес, {name}! Ще се справиш чудесно. 💪',
+  'Лека нощ, {name}! Сладки сънища. 🌙',
+  '{name}, липсваш ми. Нямам търпение да те видя!',
+  'Ти си най-хубавата част от деня ми, {name}. ❤️',
+  'Прегръщам те от разстояние, {name} 🤗',
+  'Хубава седмица, {name}! Нека е пълна с добри новини. ✨',
+  'Приятен уикенд, {name}! Почивай и се усмихвай. 🌿',
+  'Обичам те повече, отколкото думите могат да кажат, {name}.',
+  'Малко напомняне: ти си прекрасен човек, {name}! 💛',
+  '{name}, мисълта за теб озарява деня ми. ☀️',
+  '{name}, животът е по-хубав с теб.',
+  'Изпрати ми усмивка, {name}! Мисля за теб. 😊',
+  '{name}, ти си любимата ми мисъл. ❤️']
+};
+for(const [k,arr] of Object.entries(BG_WISHES)) WISHES[k].bg=arr;
+LANGS.bg='Български';
+SIGN.bg='— Изпратено с 🎉 Onomio';
+LOCALE.bg='bg-BG';
+I18N.bg={tag:'Имени дни · Рождени дни · Пожелания',proto:'Тестова версия. Хората, които виждате в началото, са примери; данните ви остават само на това устройство.',
+  tabUp:'Предстоящи',tabPeople:'Хора',tabSet:'Настройки',today:'Днес',tomorrow:'Утре',week:'Тази седмица',month:'Този месец',later:'По-късно',
+  celebrate:'Имен ден имат:',noFeast:'Днес няма големи имени дни в календара.',yours:'🎉 От вашите хора:',
+  freeBanner:'Безплатната версия поддържа до <b>3 души</b>. В тестовата версия виждате всички.',empty:'Добавете първия човек от раздела „Хора“.',
+  nPeople:'Хора: {n}',sent:'✓ Изпратено',freeUpTo3:' · безплатно до 3',addPerson:'+ Нов човек',example:'пример',noDates:'Няма дати',edit:'Промяна',
+  plan:'План',free:'Безплатен',premiumTrial:'Premium · проба',
+  freeDesc:'До 3 души, готови пожелания и подпис „Изпратено с 🎉 Onomio“ в края на всяко съобщение.',
+  premDesc:'1,99 € / месец или 14,99 € / година: неограничен брой хора, пожелания с AI, изпращане до всички наведнъж, без подпис.',
+  reminders:'Напомняния',remTime:'Час на напомнянето',remWhen:'Кога да напомня',b0:'В същия ден',b1:'1 ден преди',b3:'3 дни преди',b7:'1 седмица преди',
+  remNote:'В пълното приложение напомнянето идва като известие на телефона. В тестовата версия се запазва само настройката.',
+  remindWhat:'За какво да ми напомня',cBday:'Рождени дни',cNameday:'Имени дни',cNewyear:'Нова година',cXmas:'Коледа',cEaster:'Великден',cThanks:'Ден на благодарността',cValentine:'Свети Валентин',cLove:'Любовни послания',
+  myWishes:'Моите пожелания',myWishesHelp:'Напишете свое пожелание. То излиза първо, преди готовите. <b>{name}</b> се заменя с името на получателя.',
+  occasion:'Повод',language:'Език',myWish:'Моето пожелание',myWishPh:'напр. Честит рожден ден, {name}! Обичаме те.',saveWish:'Запази пожеланието',resetWish:'Върни готовото',
+  look:'Външен вид, език и подпис',appLang:'Език на приложението',auto:'Автоматично (от телефона)',mySig:'Мой подпис в края на съобщенията',sigPh:'напр. С обич, Тео',
+  freeSigNote:'Безплатната версия добавя подписа „{sig}“.',
+  howHol:'Как работят празниците',howHol1:'Всеки получател има своя държава и език. Приложението използва празниците на тази държава: православен или католически Великден, Коледа на 25 декември или 7 януари, Ден на благодарността и т.н.',
+  howHol2:'Великден {y}: католически {w}, православен {o}. Изчислява се автоматично всяка година.',howHol3:'Календари на имените дни: България, Гърция, Кипър, Полша. За други държави въведете датата ръчно.',
+  data:'Данни',dataNote:'Хората ви остават само на това устройство. Нищо не се изпраща никъде.',privacy:'Политика за поверителност',contact:'Контакт',
+  resetEx:'Върни примерите',confirmAgain:'Натиснете отново за потвърждение',
+  saved:'Запазено',writeFirst:'Първо напишете пожеланието',wishSaved:'Пожеланието е запазено',wishReset:'Готовото пожелание е върнато',examplesBack:'Примерите са върнати',
+  todayLow:'днес',wishLang:'Език на пожеланието',tone:'Стил',another:'↻ Друго пожелание',msgTo:'Съобщение до {name}',sigHint:'В края се добавя: „{sig}“. Премахва се с Premium.',
+  copy:'Копирай',copyHint:'Ако приложението не се отвори, натиснете „Копирай“ и поставете съобщението.',close:'Затвори',toAll:'До всички',iSent:'Изпратих го ✓',
+  copied:'Копирано',selected:'Текстът е маркиран: използвайте Копирай от менюто',aiSoon:'Лични пожелания с AI идват в пълното приложение',premiumOnly:'Налично в Premium',
+  allPremium:'Изпращането до всички наведнъж е в Premium',allMarked:'Всички са отбелязани като изпратени',nextP:'Следващ: {name}',allDone:'Браво! Всички пожелания са изпратени',
+  newP:'Нов човек',editP:'Промяна на човек',name:'Име',namePh:'напр. Иван',rel:'Връзка',relPh:'напр. Сестра',country:'Държава на получателя',wishLang2:'Език на пожеланията',
+  bdayL:'Рожден ден',ndL:'Имен ден (ако не е намерен автоматично)',loveL:'💌 Любовни послания',weekday:'Ден от седмицата',partner:'Партньор / съпруг(а) (напомняне за Свети Валентин)',
+  phone:'Мобилен (по желание)',email:'Имейл (по желание)',del:'Изтрий',sure:'Сигурни ли сте?',cancel:'Отказ',save:'Запази',
+  hintManual:'Ще се използва въведената от вас дата.',hintFound:'Намерен имен ден: {d}',hintNotInCal:'Това име го няма в календара. Въведете датата ръчно.',
+  hintNoCal:'Все още нямаме календар на имените дни за тази държава. Ако празнуват, въведете датата ръчно.',deleted:'Изтрито',added:'Добавено',
+  lf_:'Не',lf_daily:'Всеки ден',lf_weekly:'Веднъж седмично',lf_monthly:'Веднъж месечно',
+  t_birthday:'Рожден ден',t_nameday:'Имен ден',t_newyear:'Нова година',t_christmas:'Коледа',t_christmas_j:'Коледа (7 януари)',t_wigilia:'Wigilia · полска Бъдни вечер',
+  t_easter_o:'Великден (православен)',t_easter_w:'Великден (католически)',t_thanks_us:'Ден на благодарността (САЩ)',t_thanks_ca:'Ден на благодарността (Канада)',t_valentine:'Свети Валентин',t_love:'Любовно послание',t_thanksgiving:'Ден на благодарността',
+  tn_auto:'Автоматичен',tn_w:'Топъл',tn_f:'Официален',tn_h:'Забавен',ac_pink:'Розов',ac_violet:'Лилав',ac_mint:'Тюркоазен',ac_sun:'Златист',
+  inDay:'след {n} ден',inDays:'след {n} дни'};
+I18N.el.howHol3='Εορτολόγια: Ελλάδα, Κύπρος, Πολωνία, Βουλγαρία. Για τις άλλες χώρες βάζεις την ονομαστική εορτή με το χέρι.';
+I18N.en.howHol3='Name-day calendars: Greece, Cyprus, Poland, Bulgaria. For other countries, enter the name day yourself.';
+I18N.pl.howHol3='Kalendarze imienin: Grecja, Cypr, Polska, Bułgaria. Dla innych krajów wpisz imieniny ręcznie.';
+SAMPLES.bg=[
+  {id:'p1',name:'Елена',rel:'Съпруга',country:'BG',lang:'bg',bday:'03-14',partner:true,love:'daily',loveDay:5},
+  {id:'p2',name:'Михаил',rel:'Кум',country:'BG',lang:'bg',bday:'02-02'},
+  {id:'p3',name:'Мария',rel:'Майка',country:'BG',lang:'bg',bday:'06-30'},
+  {id:'p4',name:'Георги',rel:'Брат',country:'BG',lang:'bg',bday:'09-03'},
+  {id:'p5',name:'Νίκος',rel:'Приятел от Гърция',country:'GR',lang:'el',bday:'11-19'},
+  {id:'p6',name:'Sarah',rel:'Колежка',country:'US',lang:'en',bday:'12-12'}];
+
+/* ---------- Romanian: name-day calendar, wishes, interface ---------- */
+const RO_CAL = [
+ ['01-01',['Vasile','Vasilica','Vasilică']],
+ ['01-06',['Iordan','Iordache','Bogdan','Bogdana','Teofan','Teofana']],
+ ['01-07',['Ion','Ioan','Ioana','Ionuț','Ionel','Ionela','Nelu','Oana','Ionică']],
+ ['01-17',['Anton','Antonia','Antoniu','Toni']],
+ ['01-25',['Grigore','Grigorie']],
+ ['02-03',['Simion','Simona','Simeon']],
+ ['00-00',['Florin','Florina','Florian','Florica','Florentina','Florentin','Viorica','Viorel','Violeta','Crina','Margareta','Camelia','Iasmina','Narcisa','Lăcrămioara','Garofița'],'palm'],
+ ['04-23',['Gheorghe','George','Georgiana','Georgeta','Gelu','Gigel'],'george'],
+ ['05-21',['Constantin','Elena','Costel','Costin','Costică','Ileana','Lenuța','Constantina']],
+ ['06-24',['Sânziana','Drăgaica']],
+ ['06-29',['Petru','Pavel','Paul','Paula','Petrică','Petra','Petronela']],
+ ['07-20',['Ilie','Ilinca','Iliuță']],
+ ['07-25',['Ana','Anca','Anuța']],
+ ['08-15',['Maria','Marian','Mariana','Marioara','Mărioara','Maricica','Mioara','Marin','Marina']],
+ ['09-17',['Sofia']],
+ ['10-14',['Paraschiva','Parascheva','Paraschiv']],
+ ['10-26',['Dumitru','Dumitrița','Dimitrie','Mitică','Dumitra','Dumitrel']],
+ ['11-08',['Mihai','Mihail','Mihaela','Mihăiță','Gabriel','Gabriela','Gavril','Gabi']],
+ ['11-25',['Ecaterina','Cătălina','Cătălin','Caterina']],
+ ['11-30',['Andrei','Andreea','Andra']],
+ ['12-04',['Varvara','Barbara']],
+ ['12-06',['Nicolae','Nicoleta','Nicu','Niculina','Nicușor','Nicola']],
+ ['12-25',['Cristian','Cristina','Cristi','Cristiana','Crăciun']],
+ ['12-27',['Ștefan','Ștefania','Ștefana','Fănel','Fănica']]
+];
+const RO_WISHES = {
+ birthday:['La mulți ani, {name}! Îți doresc sănătate, fericire și multă iubire. 🎂',
+  'La mulți ani, {name}! Să ți se împlinească toate visele. 🎉',
+  'Multă sănătate, zâmbete și noroc, {name}! La mulți ani!',
+  '{name}, să ai un an de viață minunat, cel mai frumos de până acum! 🎈',
+  'La mulți ani cu sănătate, {name}! Bucură-te de fiecare clipă.',
+  'Noroc și la mulți ani, {name}! 🥂',
+  'La mulți ani, {name}! Mulțumesc că exiști în viața mea.',
+  'f|La mulți ani, {name}! Vă doresc multă sănătate, împliniri personale și succes profesional.',
+  'f|Sincere felicitări cu ocazia zilei de naștere, {name}! Multă sănătate!',
+  'h|La mulți ani, {name}! Nu număra anii, numără zâmbetele. 😄🎂',
+  'h|{name}, nu îmbătrânești, doar treci la nivelul următor! La mulți ani! 🎮'],
+ nameday:['La mulți ani de ziua numelui, {name}! Multă sănătate și fericire!',
+  'La mulți ani, {name}! Să porți numele cu bucurie și mândrie. 🌸',
+  '{name}, la mulți ani de onomastică! Îți doresc sănătate și multe bucurii.',
+  'La mulți ani, {name}! Sfântul ocrotitor să te aibă mereu în pază.',
+  'Noroc și la mulți ani de ziua numelui, {name}! 🥂',
+  'La mulți ani, {name}! Să ai parte numai de zile senine.',
+  'f|La mulți ani de ziua numelui, {name}! Vă doresc sănătate și bucurii.',
+  'f|Sincere felicitări cu ocazia onomasticii, {name}!',
+  'h|La mulți ani, {name}! Azi tu faci cinste, așa e tradiția! 😄',
+  'h|{name}, la mulți ani! Azi telefonul tău o să ia foc. 📱🔥'],
+ newyear:['La mulți ani, {name}! Sănătate, fericire și succes în {year}!',
+  'Un {year} plin de bucurii, {name}! La mulți ani! ✨',
+  'Un An Nou fericit, {name}! Multă iubire și noroc în {year}!',
+  'Noroc pentru {year}, {name}! Să fie cel mai bun an de până acum. 🥂',
+  'f|La mulți ani, {name}! Vă doresc sănătate și succes în {year}.',
+  'f|Sărbători fericite și un {year} cu realizări, {name}! Vă mulțumim pentru colaborare.',
+  'h|La mulți ani, {name}! Să-ți țină rezoluțiile măcar până în februarie! 😄'],
+ christmas:['Crăciun fericit, {name}! Sărbători calde alături de cei dragi. 🎄',
+  'Sărbători fericite, {name}! Pace, sănătate și bucurie în casa ta.',
+  'Crăciun fericit și sărbători luminoase, {name}! ✨',
+  'Un Crăciun liniștit și plin de iubire, {name}!',
+  'f|Crăciun fericit, {name}! Vă doresc sărbători liniștite și sănătate întregii familii.',
+  'f|Sărbători fericite, {name}! Vă mulțumim pentru încredere.',
+  'h|Crăciun fericit, {name}! De sărbători caloriile nu se pun! 🍪😄'],
+ easter_o:['Hristos a înviat, {name}! Paște fericit! 🥚',
+  'Paște fericit, {name}! Sănătate, pace și bucurie pentru toată familia.',
+  'Hristos a înviat! Sărbători luminoase, {name}! 🕯️',
+  'f|Paște fericit, {name}! Vă doresc sănătate și sărbători luminoase.',
+  'h|Paște fericit, {name}! Să ai cel mai tare ou la ciocnit! 🥚😄'],
+ valentine:['O zi a îndrăgostiților fericită, {name}! Te iubesc ❤️',
+  '{name}, fiecare zi cu tine e o sărbătoare. Te iubesc!',
+  'Te iubesc, iubirea mea! Ești cel mai frumos lucru din viața mea. 💕',
+  '{name}, îți mulțumesc pentru fiecare zâmbet. Te iubesc! ❤️',
+  'Azi, mâine și mereu: tu. Te iubesc, {name}! ❤️',
+  'O zi plină de iubire, {name}! Cu tine fiecare zi are culoare. 🌹',
+  'Tu ești acasă pentru mine, {name}. ❤️',
+  '{name}, nu am nevoie de 14 februarie ca să-ți spun că te iubesc, dar ți-o spun și azi! ❤️',
+  'De Valentine’s Day și de Dragobete, {name}: te iubesc! 💕',
+  'h|Te iubesc mai mult decât cafeaua de dimineață, {name}! ☕❤️',
+  'h|{name}, ultima bucată de ciocolată o păstrez mereu pentru tine… aproape mereu! 🍫😄',
+  'h|{name}, mă suporți de atâția ani, meriți o medalie. 🏅❤️'],
+ love:['Bună dimineața, {name}! Îți doresc o zi minunată. Mă gândesc la tine ❤️',
+  '{name}, voiam doar să-ți spun cât de bine e că exiști.',
+  'O zi frumoasă, {name}! Te iubesc mult.',
+  'M-am gândit la tine și am zâmbit, {name}. 😊',
+  'Îți mulțumesc că ești mereu alături de mine, {name}.',
+  'Bună dimineața, {name}! Cafeaua e mai dulce când mă gândesc la tine. ☕',
+  '{name}, orice ar aduce ziua de azi, nu uita că sunt aici pentru tine.',
+  'Baftă azi, {name}! O să te descurci de minune. 💪',
+  'Noapte bună, {name}! Vise plăcute. 🌙',
+  '{name}, mi-e dor de tine. Abia aștept să te văd!',
+  'Ești partea cea mai frumoasă a zilei mele, {name}. ❤️',
+  'Te îmbrățișez de la distanță, {name} 🤗',
+  'O săptămână frumoasă, {name}! Să fie plină de vești bune. ✨',
+  'Un weekend frumos, {name}! Odihnește-te și zâmbește. 🌿',
+  'Te iubesc mai mult decât pot spune cuvintele, {name}.',
+  'Un mic memento: ești un om minunat, {name}! 💛',
+  '{name}, gândul la tine îmi luminează ziua. ☀️',
+  '{name}, viața e mai frumoasă cu tine.',
+  'Trimite-mi un zâmbet, {name}! Mă gândesc la tine. 😊',
+  '{name}, ești gândul meu preferat. ❤️']
+};
+for(const [k,arr] of Object.entries(RO_WISHES)) WISHES[k].ro=arr;
+LANGS.ro='Română';
+SIGN.ro='— Trimis cu 🎉 Onomio';
+LOCALE.ro='ro-RO';
+I18N.ro={tag:'Onomastici · Zile de naștere · Urări',proto:'Versiune de test. Persoanele pe care le vezi la început sunt exemple; datele tale rămân doar pe acest dispozitiv.',
+  tabUp:'Urmează',tabPeople:'Persoane',tabSet:'Setări',today:'Azi',tomorrow:'Mâine',week:'Săptămâna aceasta',month:'Luna aceasta',later:'Mai târziu',
+  celebrate:'Își serbează onomastica:',noFeast:'Azi nu sunt onomastici importante în calendar.',yours:'🎉 Dintre persoanele tale:',
+  freeBanner:'Versiunea gratuită acceptă până la <b>3 persoane</b>. În versiunea de test le vezi pe toate.',empty:'Adaugă prima persoană din fila „Persoane”.',
+  nPeople:'{n} persoane',sent:'✓ Trimis',freeUpTo3:' · gratuit până la 3',addPerson:'+ Persoană nouă',example:'exemplu',noDates:'Fără date',edit:'Modifică',
+  plan:'Plan',free:'Gratuit',premiumTrial:'Premium · probă',
+  freeDesc:'Până la 3 persoane, urări gata făcute și semnătura „Trimis cu 🎉 Onomio” la finalul fiecărui mesaj.',
+  premDesc:'1,99 € / lună sau 14,99 € / an: persoane nelimitate, urări cu AI, trimitere către toți deodată, fără semnătură.',
+  reminders:'Mementouri',remTime:'Ora mementoului',remWhen:'Când să-mi amintească',b0:'În aceeași zi',b1:'Cu 1 zi înainte',b3:'Cu 3 zile înainte',b7:'Cu o săptămână înainte',
+  remNote:'În aplicația completă, mementoul vine ca notificare pe telefon. În versiunea de test se salvează doar setarea.',
+  remindWhat:'Ce să-mi amintească',cBday:'Zile de naștere',cNameday:'Onomastici',cNewyear:'Anul Nou',cXmas:'Crăciun',cEaster:'Paște',cThanks:'Ziua Recunoștinței',cValentine:'Valentine’s Day',cLove:'Mesaje de dragoste',
+  myWishes:'Urările mele',myWishesHelp:'Scrie propria urare. Apare prima, înaintea celor gata făcute. <b>{name}</b> se înlocuiește cu numele destinatarului.',
+  occasion:'Ocazie',language:'Limbă',myWish:'Urarea mea',myWishPh:'ex. La mulți ani, {name}! Te iubim.',saveWish:'Salvează urarea',resetWish:'Revino la cea gata făcută',
+  look:'Aspect, limbă și semnătură',appLang:'Limba aplicației',auto:'Automat (după telefon)',mySig:'Semnătura mea la finalul mesajelor',sigPh:'ex. Cu drag, Teo',
+  freeSigNote:'Versiunea gratuită adaugă semnătura „{sig}”.',
+  howHol:'Cum funcționează sărbătorile',howHol1:'Fiecare destinatar are țara și limba lui. Aplicația folosește sărbătorile acelei țări: Paște ortodox sau catolic, Crăciun pe 25 decembrie sau 7 ianuarie, Ziua Recunoștinței etc.',
+  howHol2:'Paște {y}: catolic {w}, ortodox {o}. Se calculează automat în fiecare an.',howHol3:'Calendare de onomastici: România, Grecia, Cipru, Polonia, Bulgaria. Pentru alte țări introdu data manual.',
+  data:'Date',dataNote:'Persoanele tale rămân doar pe acest dispozitiv. Nu se trimite nimic nicăieri.',privacy:'Politica de confidențialitate',contact:'Contact',
+  resetEx:'Readu exemplele',confirmAgain:'Apasă din nou pentru confirmare',
+  saved:'Salvat',writeFirst:'Scrie mai întâi urarea',wishSaved:'Urarea a fost salvată',wishReset:'S-a revenit la urarea gata făcută',examplesBack:'Exemplele au fost readuse',
+  todayLow:'azi',wishLang:'Limba urării',tone:'Stil',another:'↻ Altă urare',msgTo:'Mesaj pentru {name}',sigHint:'La final se adaugă: „{sig}”. Se elimină cu Premium.',
+  copy:'Copiază',copyHint:'Dacă aplicația nu se deschide, apasă „Copiază” și lipește mesajul.',close:'Închide',toAll:'Către toți',iSent:'L-am trimis ✓',
+  copied:'Copiat',selected:'Textul este selectat: folosește Copiază din meniu',aiSoon:'Urările personalizate cu AI vin în aplicația completă',premiumOnly:'Disponibil în Premium',
+  allPremium:'Trimiterea către toți deodată este în Premium',allMarked:'Toate au fost marcate ca trimise',nextP:'Următorul: {name}',allDone:'Bravo! Toate urările au fost trimise',
+  newP:'Persoană nouă',editP:'Modifică persoana',name:'Nume',namePh:'ex. Ion',rel:'Relație',relPh:'ex. Soră',country:'Țara destinatarului',wishLang2:'Limba urărilor',
+  bdayL:'Zi de naștere',ndL:'Onomastică (dacă nu a fost găsită automat)',loveL:'💌 Mesaje de dragoste',weekday:'Ziua săptămânii',partner:'Partener / soț / soție (memento de Valentine’s Day)',
+  phone:'Mobil (opțional)',email:'Email (opțional)',del:'Șterge',sure:'Ești sigur?',cancel:'Anulează',save:'Salvează',
+  hintManual:'Se va folosi data introdusă de tine.',hintFound:'Onomastică găsită: {d}',hintNotInCal:'Numele nu este în calendar. Introdu data manual.',
+  hintNoCal:'Încă nu avem calendar de onomastici pentru această țară. Dacă se sărbătorește, introdu data manual.',deleted:'Șters',added:'Adăugat',
+  lf_:'Nu',lf_daily:'În fiecare zi',lf_weekly:'O dată pe săptămână',lf_monthly:'O dată pe lună',
+  t_birthday:'Zi de naștere',t_nameday:'Onomastică',t_newyear:'Anul Nou',t_christmas:'Crăciun',t_christmas_j:'Crăciun (7 ianuarie)',t_wigilia:'Wigilia · Ajunul Crăciunului în Polonia',
+  t_easter_o:'Paște (ortodox)',t_easter_w:'Paște (catolic)',t_thanks_us:'Ziua Recunoștinței (SUA)',t_thanks_ca:'Ziua Recunoștinței (Canada)',t_valentine:'Valentine’s Day',t_love:'Mesaj de dragoste',t_thanksgiving:'Ziua Recunoștinței',
+  tn_auto:'Automat',tn_w:'Cald',tn_f:'Formal',tn_h:'Amuzant',ac_pink:'Roz',ac_violet:'Violet',ac_mint:'Turcoaz',ac_sun:'Auriu',
+  inDay:'peste {n} zi',inDays:'peste {n} zile'};
+I18N.el.howHol3='Εορτολόγια: Ελλάδα, Κύπρος, Πολωνία, Βουλγαρία, Ρουμανία. Για τις άλλες χώρες βάζεις την ονομαστική εορτή με το χέρι.';
+I18N.en.howHol3='Name-day calendars: Greece, Cyprus, Poland, Bulgaria, Romania. For other countries, enter the name day yourself.';
+I18N.pl.howHol3='Kalendarze imienin: Grecja, Cypr, Polska, Bułgaria, Rumunia. Dla innych krajów wpisz imieniny ręcznie.';
+I18N.bg.howHol3='Календари на имените дни: България, Гърция, Кипър, Полша, Румъния. За други държави въведете датата ръчно.';
+SAMPLES.ro=[
+  {id:'p1',name:'Elena',rel:'Soție',country:'RO',lang:'ro',bday:'03-14',partner:true,love:'daily',loveDay:5},
+  {id:'p2',name:'Mihai',rel:'Naș',country:'RO',lang:'ro',bday:'02-02'},
+  {id:'p3',name:'Maria',rel:'Mamă',country:'RO',lang:'ro',bday:'06-30'},
+  {id:'p4',name:'Andrei',rel:'Frate',country:'RO',lang:'ro',bday:'09-03'},
+  {id:'p5',name:'Νίκος',rel:'Prieten din Grecia',country:'GR',lang:'el',bday:'11-19'},
+  {id:'p6',name:'Sarah',rel:'Colegă',country:'US',lang:'en',bday:'12-12'}];
+
+/* ---------- Local customs: Mărțișor, Dragobete (RO/MD), Līgo/Jāņi (LV) ---------- */
+Object.assign(TYPES,{
+ martisor:{ic:'🎀',cls:'t-holiday',w:'martisor'},
+ dragobete:{ic:'💕',cls:'t-love',w:'dragobete'},
+ ligo:{ic:'🌿',cls:'t-holiday',w:'ligo'}});
+Object.assign(HOLIDAY_FN,{martisor:y=>new Date(y,2,1),dragobete:y=>new Date(y,1,24),ligo:y=>new Date(y,5,23)});
+WISHES.martisor={
+ ro:['Un 1 Martie fericit, {name}! Să ai o primăvară frumoasă. 🌸',
+  'La mulți ani de Mărțișor, {name}! Noroc, sănătate și primăvară în suflet. 🤍❤️',
+  'Un mărțișor virtual pentru tine, {name}: să-ți poarte noroc tot anul! 🍀',
+  'Primăvară frumoasă, {name}! Să ai zile senine și pline de bucurii. ☀️',
+  'f|O primăvară frumoasă și un 1 Martie fericit, {name}! Multă sănătate.',
+  'f|Cu ocazia zilei de 1 Martie, vă doresc o primăvară plină de realizări, {name}!',
+  'h|Un 1 Martie fericit, {name}! Să-ți înflorească și plantele uitate în ghiveci! 🌱😄'],
+ en:['Happy 1st of March, {name}! Wishing you a beautiful spring. 🌸',
+  'Here’s a virtual mărțișor for you, {name}: may it bring you luck all year! 🍀',
+  'f|Happy 1st of March, {name}! Wishing you a spring full of success.'],
+ el:['Καλό Μάρτη, {name}! Να έχεις μια όμορφη άνοιξη. 🌸',
+  'Ένας «μάρτης» για σένα, {name}: να σε φυλάει όλη τη χρονιά! 🍀',
+  'f|Καλό μήνα και καλή άνοιξη, {name}!']};
+WISHES.dragobete={
+ ro:['Dragobete fericit, {name}! Te iubesc ❤️',
+  'De Dragobete, {name}, îți spun din nou: ești dragostea mea. 💕',
+  'Dragobetele sărută fetele… și eu te sărut pe tine, {name}! 😘',
+  '{name}, de Dragobete și în fiecare zi: te iubesc! 🌸',
+  'h|Dragobete fericit, {name}! Azi ai voie să mă săruți de două ori. 😄❤️'],
+ en:['Happy Dragobete, {name}! It’s the Romanian day of love, and I love you ❤️',
+  'Happy Dragobete, {name}! Every day with you is a celebration. 💕'],
+ el:['Χρόνια πολλά για το Dragobete, {name}! Σ’ αγαπώ ❤️',
+  'Καλό Dragobete, {name}! Κάθε μέρα μαζί σου είναι γιορτή. 💕']};
+WISHES.ligo={
+ lv:['Līgo, {name}! Priecīgus Jāņus! 🌿🔥',
+  'Priecīgus Jāņus, {name}! Lai ugunskurs silda un siers garšo. 🧀',
+  'Līgo, līgo, {name}! Lai īsākā nakts ir pati skaistākā. ✨',
+  'Priecīgus Līgo svētkus, {name}! Lai tev izdodas atrast papardes ziedu. 🌼',
+  'f|Priecīgus Līgo svētkus, {name}! Novēlu Jums gaišu vasaru.',
+  'h|Līgo, {name}! Atceries: Jāņu naktī gulēt nedrīkst! 😄🔥'],
+ en:['Līgo, {name}! Happy Midsummer! 🌿🔥',
+  'Happy Jāņi, {name}! Enjoy the shortest night of the year. ✨'],
+ el:['Līgo, {name}! Καλό καλοκαίρι και καλές γιορτές του Αη-Γιάννη! 🌿🔥',
+  'Χρόνια πολλά για τα Jāņi, {name}! Καλή να ’ναι η πιο μικρή νύχτα του χρόνου. ✨']};
+
+/* ---------- Latvian: name-day calendar, wishes, interface ---------- */
+const LV_CAL = [
+ ['01-01',['Laimnesis','Solvita','Solvija']],
+ ['01-14',['Roberts','Roberta','Raitis','Raits']],
+ ['01-21',['Agnese','Agnija','Agne']],
+ ['01-27',['Ilze','Ildze','Izolde']],
+ ['01-28',['Kārlis','Spodris']],
+ ['03-19',['Jāzeps','Juzefa']],
+ ['03-25',['Māra','Mārīte','Marita']],
+ ['04-23',['Jurģis','Juris','Georgs']],
+ ['06-23',['Līga']],
+ ['06-24',['Jānis']],
+ ['06-29',['Pēteris','Pāvils','Pauls','Paulis']],
+ ['07-25',['Jēkabs','Žaklīna']],
+ ['07-26',['Anna','Ance','Annija']],
+ ['09-29',['Miķelis','Mikus','Miks','Mihails']],
+ ['11-10',['Mārtiņš','Mārcis','Martīns']],
+ ['11-25',['Katrīna','Kate','Kadrija']],
+ ['11-30',['Andris','Andrejs','Andrievs']],
+ ['12-04',['Barbara','Barba','Baiba']],
+ ['12-06',['Nikolajs','Niklāvs','Nils','Klāvs']],
+ ['12-13',['Lūcija','Veldze']],
+ ['12-21',['Toms','Tomass','Saulcerīte']],
+ ['12-24',['Ādams','Ieva']]
+];
+const LV_WISHES = {
+ birthday:['Daudz laimes dzimšanas dienā, {name}! Novēlu veselību, prieku un daudz mīlestības. 🎂',
+  'Daudz laimes, {name}! Lai piepildās visi tavi sapņi. 🎉',
+  'Daudz veselības, smaidu un veiksmes, {name}! Daudz laimes dzimšanas dienā!',
+  '{name}, lai jaunais dzīves gads ir pats skaistākais! 🎈',
+  'Daudz laimes, {name}! Priecājies par katru mirkli.',
+  'Priekā, {name}! Daudz laimes dzimšanas dienā! 🥂',
+  'Daudz laimes, {name}! Paldies, ka tu esi manā dzīvē.',
+  'f|Sirsnīgi sveicu dzimšanas dienā, {name}! Novēlu Jums veselību un panākumus.',
+  'f|Daudz laimes dzimšanas dienā, {name}! Veiksmi darbā un prieku ikdienā.',
+  'h|Daudz laimes, {name}! Neskaiti gadus, skaiti smaidus. 😄🎂',
+  'h|{name}, tu nenoveco, tu vienkārši pārej nākamajā līmenī! Daudz laimes! 🎮'],
+ nameday:['Daudz laimes vārda dienā, {name}! Veselību, prieku un veiksmi!',
+  'Sveicu vārda dienā, {name}! Lai tev skaista diena. 🌸',
+  '{name}, daudz laimes vārda dienā! Lai tev netrūkst prieka.',
+  'Daudz laimes vārda dienā, {name}! Lai ziedi un smaidi visu dienu. 💐',
+  'Priekā, {name}! Daudz laimes vārda dienā! 🥂',
+  'Daudz laimes, {name}! Lai katra diena nes ko labu.',
+  'f|Sirsnīgi sveicu vārda dienā, {name}! Novēlu Jums veselību un labklājību.',
+  'f|Daudz laimes vārda dienā, {name}! Labākie novēlējumi.',
+  'h|Daudz laimes vārda dienā, {name}! Šodien tu cienā, tāda ir tradīcija! 😄',
+  'h|{name}, daudz laimes! Šodien tavs telefons neapklusīs. 📱🔥'],
+ newyear:['Laimīgu Jauno gadu, {name}! Veselību, prieku un veiksmi {year}. gadā!',
+  'Laimīgu {year}. gadu, {name}! Lai tas ir prieka pilns. ✨',
+  'Laimīgu Jauno {year}. gadu, {name}! Daudz mīlestības un veiksmes!',
+  'Priekā par {year}. gadu, {name}! Lai tas ir labākais gads līdz šim. 🥂',
+  'f|Laimīgu Jauno gadu, {name}! Novēlu Jums veselību un panākumus {year}. gadā.',
+  'f|Priecīgus svētkus un veiksmīgu {year}. gadu, {name}! Paldies par sadarbību.',
+  'h|Laimīgu Jauno gadu, {name}! Lai apņemšanās izturētu vismaz līdz februārim! 😄'],
+ christmas:['Priecīgus Ziemassvētkus, {name}! Siltus svētkus kopā ar mīļajiem. 🎄',
+  'Priecīgus svētkus, {name}! Mieru, veselību un prieku tavās mājās.',
+  'Gaišus un priecīgus Ziemassvētkus, {name}! ✨',
+  'Mierīgus un mīlestības pilnus Ziemassvētkus, {name}!',
+  'f|Priecīgus Ziemassvētkus, {name}! Novēlu Jums mierīgus svētkus un veselību visai ģimenei.',
+  'f|Priecīgus svētkus, {name}! Paldies par uzticību.',
+  'h|Priecīgus Ziemassvētkus, {name}! Svētkos kalorijas neskaitās! 🍪😄'],
+ easter_w:['Priecīgas Lieldienas, {name}! 🐣',
+  'Gaišas un priecīgas Lieldienas, {name}! Veselību un prieku visai ģimenei.',
+  'Priecīgas Lieldienas, {name}! Lai pavasaris nes prieku. 🌷',
+  'f|Priecīgas Lieldienas, {name}! Novēlu Jums gaišus svētkus.',
+  'h|Priecīgas Lieldienas, {name}! Lai tava ola uzvar olu kaujā! 🥚😄'],
+ valentine:['Laimīgu Valentīndienu, {name}! Es tevi mīlu ❤️',
+  '{name}, katra diena ar tevi ir svētki. Es tevi mīlu!',
+  'Es tevi mīlu, mana mīlestība! Tu esi skaistākais manā dzīvē. 💕',
+  '{name}, paldies par katru smaidu. Es tevi mīlu! ❤️',
+  'Šodien, rīt un vienmēr: tu. Laimīgu Valentīndienu, {name}! ❤️',
+  'Laimīgu Valentīndienu, {name}! Ar tevi katra diena ir krāsaina. 🌹',
+  'Tu esi manas mājas, {name}. ❤️',
+  '{name}, man nevajag 14. februāri, lai teiktu, ka tevi mīlu, bet saku to arī šodien! ❤️',
+  'h|Es tevi mīlu vairāk nekā rīta kafiju, {name}! ☕❤️',
+  'h|{name}, pēdējo šokolādes gabaliņu vienmēr atstāju tev… gandrīz vienmēr! 🍫😄',
+  'h|{name}, tu mani pacieš tik daudz gadu, tev pienākas medaļa. 🏅❤️'],
+ love:['Labrīt, {name}! Skaistu dienu. Domāju par tevi ❤️',
+  '{name}, gribēju tikai pateikt, cik labi, ka tu esi.',
+  'Jauku dienu, {name}! Es tevi ļoti mīlu.',
+  'Iedomājos par tevi un pasmaidīju, {name}. 😊',
+  'Paldies, ka vienmēr esi blakus, {name}.',
+  'Labrīt, {name}! Kafija ir saldāka, kad domāju par tevi. ☕',
+  '{name}, lai kas šodien notiktu, atceries, ka es esmu šeit tev.',
+  'Veiksmi šodien, {name}! Tev viss izdosies. 💪',
+  'Ar labu nakti, {name}! Saldus sapņus. 🌙',
+  '{name}, man tevis pietrūkst. Nevaru sagaidīt, kad tevi redzēšu!',
+  'Tu esi manas dienas skaistākā daļa, {name}. ❤️',
+  'Apskauju tevi no attāluma, {name} 🤗',
+  'Jauku nedēļu, {name}! Lai tā ir labu ziņu pilna. ✨',
+  'Jaukas brīvdienas, {name}! Atpūties un smaidi. 🌿',
+  'Es tevi mīlu vairāk, nekā vārdi spēj pateikt, {name}.',
+  'Mazs atgādinājums: tu esi brīnišķīgs cilvēks, {name}! 💛',
+  '{name}, doma par tevi izgaismo manu dienu. ☀️',
+  '{name}, dzīve ir skaistāka ar tevi.',
+  'Atsūti man smaidu, {name}! Domāju par tevi. 😊',
+  '{name}, tu esi mana mīļākā doma. ❤️']
+};
+for(const [k,arr] of Object.entries(LV_WISHES)) WISHES[k].lv=arr;
+LANGS.lv='Latviešu';
+SIGN.lv='— Nosūtīts ar 🎉 Onomio';
+LOCALE.lv='lv-LV';
+I18N.lv={tag:'Vārda dienas · Dzimšanas dienas · Apsveikumi',proto:'Testa versija. Cilvēki, kurus redzi sākumā, ir piemēri; tavi dati paliek tikai šajā ierīcē.',
+  tabUp:'Gaidāmie',tabPeople:'Cilvēki',tabSet:'Iestatījumi',today:'Šodien',tomorrow:'Rīt',week:'Šonedēļ',month:'Šomēnes',later:'Vēlāk',
+  celebrate:'Vārda dienu svin:',noFeast:'Šodien kalendārā nav lielu vārda dienu.',yours:'🎉 No taviem cilvēkiem:',
+  freeBanner:'Bezmaksas versijā var būt līdz <b>3 cilvēkiem</b>. Testa versijā redzi visus.',empty:'Pievieno pirmo cilvēku sadaļā „Cilvēki”.',
+  nPeople:'Cilvēki: {n}',sent:'✓ Nosūtīts',freeUpTo3:' · bez maksas līdz 3',addPerson:'+ Jauns cilvēks',example:'piemērs',noDates:'Nav datumu',edit:'Labot',
+  plan:'Plāns',free:'Bezmaksas',premiumTrial:'Premium · izmēģinājums',
+  freeDesc:'Līdz 3 cilvēkiem, gatavi apsveikumi un paraksts „Nosūtīts ar 🎉 Onomio” katras ziņas beigās.',
+  premDesc:'1,99 € mēnesī vai 14,99 € gadā: neierobežots cilvēku skaits, apsveikumi ar AI, sūtīšana visiem uzreiz, bez paraksta.',
+  reminders:'Atgādinājumi',remTime:'Atgādinājuma laiks',remWhen:'Kad atgādināt',b0:'Tajā pašā dienā',b1:'1 dienu iepriekš',b3:'3 dienas iepriekš',b7:'1 nedēļu iepriekš',
+  remNote:'Pilnajā lietotnē atgādinājums pienāk kā paziņojums telefonā. Testa versijā tiek saglabāts tikai iestatījums.',
+  remindWhat:'Par ko atgādināt',cBday:'Dzimšanas dienas',cNameday:'Vārda dienas',cNewyear:'Jaunais gads',cXmas:'Ziemassvētki',cEaster:'Lieldienas',cThanks:'Pateicības diena',cValentine:'Valentīndiena',cLove:'Mīlestības ziņas',
+  myWishes:'Mani apsveikumi',myWishesHelp:'Uzraksti savu apsveikumu. Tas parādās pirmais, pirms gatavajiem. <b>{name}</b> tiek aizstāts ar saņēmēja vārdu.',
+  occasion:'Notikums',language:'Valoda',myWish:'Mans apsveikums',myWishPh:'piem. Daudz laimes, {name}! Mēs tevi mīlam.',saveWish:'Saglabāt apsveikumu',resetWish:'Atjaunot gatavo',
+  look:'Izskats, valoda un paraksts',appLang:'Lietotnes valoda',auto:'Automātiski (no telefona)',mySig:'Mans paraksts ziņu beigās',sigPh:'piem. Ar mīlestību, Teo',
+  freeSigNote:'Bezmaksas versija pievieno parakstu „{sig}”.',
+  howHol:'Kā darbojas svētki',howHol1:'Katram saņēmējam ir sava valsts un valoda. Lietotne izmanto šīs valsts svētkus: pareizticīgo vai rietumu Lieldienas, Ziemassvētkus 25. decembrī vai 7. janvārī, Pateicības dienu u. c.',
+  howHol2:'Lieldienas {y}: rietumu {w}, pareizticīgo {o}. Tiek aprēķinātas automātiski katru gadu.',howHol3:'Vārda dienu kalendāri: Latvija, Grieķija, Kipra, Polija, Bulgārija, Rumānija. Citām valstīm ievadi datumu pats.',
+  data:'Dati',dataNote:'Tavi cilvēki paliek tikai šajā ierīcē. Nekas netiek nekur sūtīts.',privacy:'Privātuma politika',contact:'Kontakti',
+  resetEx:'Atjaunot piemērus',confirmAgain:'Nospied vēlreiz, lai apstiprinātu',
+  saved:'Saglabāts',writeFirst:'Vispirms uzraksti apsveikumu',wishSaved:'Apsveikums saglabāts',wishReset:'Gatavais apsveikums atjaunots',examplesBack:'Piemēri atjaunoti',
+  todayLow:'šodien',wishLang:'Apsveikuma valoda',tone:'Stils',another:'↻ Cits apsveikums',msgTo:'Ziņa: {name}',sigHint:'Beigās tiek pievienots: „{sig}”. Ar Premium to var noņemt.',
+  copy:'Kopēt',copyHint:'Ja lietotne neatveras, nospied „Kopēt” un ielīmē ziņu.',close:'Aizvērt',toAll:'Visiem',iSent:'Nosūtīju ✓',
+  copied:'Nokopēts',selected:'Teksts ir iezīmēts: izmanto „Kopēt” no izvēlnes',aiSoon:'Personalizēti apsveikumi ar AI būs pilnajā lietotnē',premiumOnly:'Pieejams Premium versijā',
+  allPremium:'Sūtīšana visiem uzreiz ir Premium versijā',allMarked:'Visi atzīmēti kā nosūtīti',nextP:'Nākamais: {name}',allDone:'Lieliski! Visi apsveikumi nosūtīti',
+  newP:'Jauns cilvēks',editP:'Labot cilvēku',name:'Vārds',namePh:'piem. Jānis',rel:'Attiecības',relPh:'piem. Māsa',country:'Saņēmēja valsts',wishLang2:'Apsveikumu valoda',
+  bdayL:'Dzimšanas diena',ndL:'Vārda diena (ja netika atrasta automātiski)',loveL:'💌 Mīlestības ziņas',weekday:'Nedēļas diena',partner:'Partneris / dzīvesbiedrs (atgādinājums Valentīndienā)',
+  phone:'Mobilais (nav obligāts)',email:'E-pasts (nav obligāts)',del:'Dzēst',sure:'Vai tiešām?',cancel:'Atcelt',save:'Saglabāt',
+  hintManual:'Tiks izmantots tevis ievadītais datums.',hintFound:'Atrasta vārda diena: {d}',hintNotInCal:'Šī vārda kalendārā nav. Ievadi datumu pats.',
+  hintNoCal:'Šai valstij vēl nav vārda dienu kalendāra. Ja tur svin, ievadi datumu pats.',deleted:'Dzēsts',added:'Pievienots',
+  lf_:'Nē',lf_daily:'Katru dienu',lf_weekly:'Reizi nedēļā',lf_monthly:'Reizi mēnesī',
+  t_birthday:'Dzimšanas diena',t_nameday:'Vārda diena',t_newyear:'Jaunais gads',t_christmas:'Ziemassvētki',t_christmas_j:'Ziemassvētki (7. janvāris)',t_wigilia:'Wigilia · Polijas Ziemassvētku vakars',
+  t_easter_o:'Lieldienas (pareizticīgo)',t_easter_w:'Lieldienas (rietumu)',t_thanks_us:'Pateicības diena (ASV)',t_thanks_ca:'Pateicības diena (Kanāda)',t_valentine:'Valentīndiena',t_love:'Mīlestības ziņa',t_thanksgiving:'Pateicības diena',
+  tn_auto:'Automātiski',tn_w:'Silts',tn_f:'Oficiāls',tn_h:'Jautrs',ac_pink:'Rozā',ac_violet:'Violets',ac_mint:'Tirkīzs',ac_sun:'Zelta',
+  inDay:'pēc {n} dienas',inDays:'pēc {n} dienām'};
+const LOCAL_I18N={
+ el:{cLocal:'Τοπικά έθιμα',t_martisor:'Mărțișor · 1η Μαρτίου (Ρουμανία)',t_dragobete:'Dragobete · γιορτή της αγάπης (Ρουμανία)',t_ligo:'Līgo / Jāņi · θερινό ηλιοστάσιο (Λετονία)',
+   howHol3:'Εορτολόγια: Ελλάδα, Κύπρος, Πολωνία, Βουλγαρία, Ρουμανία, Λετονία. Για τις άλλες χώρες βάζεις την ονομαστική εορτή με το χέρι.'},
+ en:{cLocal:'Local customs',t_martisor:'Mărțișor · 1 March (Romania)',t_dragobete:'Dragobete · day of love (Romania)',t_ligo:'Līgo / Jāņi · Midsummer (Latvia)',
+   howHol3:'Name-day calendars: Greece, Cyprus, Poland, Bulgaria, Romania, Latvia. For other countries, enter the name day yourself.'},
+ pl:{cLocal:'Lokalne zwyczaje',t_martisor:'Mărțișor · 1 marca (Rumunia)',t_dragobete:'Dragobete · święto zakochanych (Rumunia)',t_ligo:'Līgo / Jāņi · noc świętojańska (Łotwa)',
+   howHol3:'Kalendarze imienin: Grecja, Cypr, Polska, Bułgaria, Rumunia, Łotwa. Dla innych krajów wpisz imieniny ręcznie.'},
+ bg:{cLocal:'Местни обичаи',t_martisor:'Мърцишор · 1 март (Румъния)',t_dragobete:'Драгобете · ден на любовта (Румъния)',t_ligo:'Лиго / Яни · Еньовден (Латвия)',
+   howHol3:'Календари на имените дни: България, Гърция, Кипър, Полша, Румъния, Латвия. За други държави въведете датата ръчно.'},
+ ro:{cLocal:'Obiceiuri locale',t_martisor:'Mărțișor · 1 Martie',t_dragobete:'Dragobete · ziua iubirii',t_ligo:'Līgo / Jāņi · Sânzienele letone (Letonia)',
+   howHol3:'Calendare de onomastici: România, Grecia, Cipru, Polonia, Bulgaria, Letonia. Pentru alte țări introdu data manual.'},
+ lv:{cLocal:'Vietējās tradīcijas',t_martisor:'Mărțișor · 1. marts (Rumānija)',t_dragobete:'Dragobete · mīlestības diena (Rumānija)',t_ligo:'Līgo / Jāņi'}};
+for(const [l,o] of Object.entries(LOCAL_I18N)) Object.assign(I18N[l],o);
+SAMPLES.lv=[
+  {id:'p1',name:'Līga',rel:'Sieva',country:'LV',lang:'lv',bday:'03-14',partner:true,love:'daily',loveDay:5},
+  {id:'p2',name:'Mārtiņš',rel:'Brālis',country:'LV',lang:'lv',bday:'02-02'},
+  {id:'p3',name:'Anna',rel:'Mamma',country:'LV',lang:'lv',bday:'06-30'},
+  {id:'p4',name:'Jānis',rel:'Krusttēvs',country:'LV',lang:'lv',bday:'09-03'},
+  {id:'p5',name:'Νίκος',rel:'Draugs no Grieķijas',country:'GR',lang:'el',bday:'11-19'},
+  {id:'p6',name:'Sarah',rel:'Kolēģe',country:'US',lang:'en',bday:'12-12'}];
+
+/* ---------- Serbian (Cyrillic "sr" + Latin "srl", generated automatically) ---------- */
+const CYR2LAT={'А':'A','Б':'B','В':'V','Г':'G','Д':'D','Ђ':'Đ','Е':'E','Ж':'Ž','З':'Z','И':'I','Ј':'J','К':'K','Л':'L','Љ':'Lj','М':'M','Н':'N','Њ':'Nj','О':'O','П':'P','Р':'R','С':'S','Т':'T','Ћ':'Ć','У':'U','Ф':'F','Х':'H','Ц':'C','Ч':'Č','Џ':'Dž','Ш':'Š'};
+for(const [c,l] of Object.entries({...CYR2LAT})) CYR2LAT[c.toLowerCase()]=l.toLowerCase();
+const lat=s=>String(s).replace(/[Ѐ-ӿ]/g,ch=>CYR2LAT[ch]??ch);
+/* Krsna slava: family patron-saint feasts. Dates are civil (Gregorian) dates; e = days after Orthodox Easter. */
+const SLAVE=[
+ {k:'nikoljdan',d:'12-19',sr:'Никољдан · Свети Никола',g:'Срећан Никољдан',en:'St Nicholas',el:'Άγιος Νικόλαος'},
+ {k:'djurdjevdan',d:'05-06',sr:'Ђурђевдан · Свети Георгије',g:'Срећан Ђурђевдан',en:'St George',el:'Άγιος Γεώργιος'},
+ {k:'jovanjdan',d:'01-20',sr:'Јовањдан · Свети Јован',g:'Срећан Јовањдан',en:'St John the Baptist',el:'Άγιος Ιωάννης ο Πρόδρομος'},
+ {k:'arandjelovdan',d:'11-21',sr:'Аранђеловдан · Свети арханђел Михаило',g:'Срећан Аранђеловдан',en:'St Michael the Archangel',el:'Αρχάγγελος Μιχαήλ'},
+ {k:'mitrovdan',d:'11-08',sr:'Митровдан · Свети Димитрије',g:'Срећан Митровдан',en:'St Demetrius',el:'Άγιος Δημήτριος'},
+ {k:'petkovaca',d:'10-27',sr:'Петковача · Света Петка',g:'Срећна Петковача',en:'St Paraskevi',el:'Αγία Παρασκευή'},
+ {k:'stevanjdan',d:'01-09',sr:'Стевањдан · Свети Стефан',g:'Срећан Стевањдан',en:'St Stephen',el:'Άγιος Στέφανος'},
+ {k:'lucindan',d:'10-31',sr:'Лучиндан · Свети Лука',g:'Срећан Лучиндан',en:'St Luke',el:'Άγιος Λουκάς'},
+ {k:'djurdjic',d:'11-16',sr:'Ђурђиц · Свети Ђорђе',g:'Срећан Ђурђиц',en:'St George (Đurđic)',el:'Άγιος Γεώργιος (Đurđic)'},
+ {k:'trifundan',d:'02-14',sr:'Трифундан · Свети Трифун',g:'Срећан Трифундан',en:'St Tryphon',el:'Άγιος Τρύφων'},
+ {k:'ilindan',d:'08-02',sr:'Илиндан · Свети Илија',g:'Срећан Илиндан',en:'St Elijah',el:'Προφήτης Ηλίας'},
+ {k:'pantelijevdan',d:'08-09',sr:'Пантелијевдан · Свети Пантелејмон',g:'Срећан Пантелијевдан',en:'St Panteleimon',el:'Άγιος Παντελεήμων'},
+ {k:'vraci',d:'11-14',sr:'Врачеви · Свети Козма и Дамјан',g:'Срећни Врачеви',en:'Sts Cosmas and Damian',el:'Άγιοι Ανάργυροι'},
+ {k:'savindan',d:'01-27',sr:'Савиндан · Свети Сава',g:'Срећан Савиндан',en:'St Sava',el:'Άγιος Σάββας'},
+ {k:'vasiljevdan',d:'01-14',sr:'Васиљевдан · Свети Василије',g:'Срећан Васиљевдан',en:'St Basil',el:'Άγιος Βασίλειος'},
+ {k:'tomindan',d:'10-19',sr:'Томиндан · Свети Тома',g:'Срећан Томиндан',en:'St Thomas',el:'Άγιος Θωμάς'},
+ {k:'mratindan',d:'11-24',sr:'Мратиндан · Свети Мрата',g:'Срећан Мратиндан',en:'St Martin (Mrata)',el:'Άγιος Μαρτίνος'},
+ {k:'andrijevdan',d:'12-13',sr:'Андријевдан · Свети Андреј',g:'Срећан Андријевдан',en:'St Andrew',el:'Άγιος Ανδρέας'},
+ {k:'petrovdan',d:'07-12',sr:'Петровдан · Свети Петар и Павле',g:'Срећан Петровдан',en:'Sts Peter and Paul',el:'Άγιοι Πέτρος και Παύλος'},
+ {k:'varvarindan',d:'12-17',sr:'Варвариндан · Света Варвара',g:'Срећан Варвариндан',en:'St Barbara',el:'Αγία Βαρβάρα'},
+ {k:'markovdan',d:'05-08',sr:'Марковдан · Свети Марко',g:'Срећан Марковдан',en:'St Mark',el:'Άγιος Μάρκος'},
+ {k:'ivanjdan',d:'07-07',sr:'Ивањдан · Рођење Светог Јована',g:'Срећан Ивањдан',en:'Nativity of St John',el:'Γενέθλιον Αγίου Ιωάννου'},
+ {k:'velika',d:'08-28',sr:'Велика Госпојина',g:'Срећна Велика Госпојина',en:'Dormition of the Theotokos',el:'Κοίμηση της Θεοτόκου'},
+ {k:'mala',d:'09-21',sr:'Мала Госпојина',g:'Срећна Мала Госпојина',en:'Nativity of the Theotokos',el:'Γενέσιον της Θεοτόκου'},
+ {k:'spasovdan',e:39,sr:'Спасовдан · Вазнесење',g:'Срећан Спасовдан',en:'Ascension',el:'Ανάληψη'},
+ {k:'trojice',e:49,sr:'Тројице · Педесетница',g:'Срећне Тројице',en:'Holy Trinity (Pentecost)',el:'Πεντηκοστή'}];
+const SLAVA_CC=new Set(['RS','ME','BA','MK']);
+const slavaOf=k=>SLAVE.find(s=>s.k===k);
+const slavaFn=k=>{const s=slavaOf(k);if(!s)return null;return s.e!=null?(y=>addDays(orthodoxEaster(y),s.e)):fixedFn(s.d);};
+const slavaLabel=(k,l)=>{const s=slavaOf(k);if(!s)return '';return l==='sr'?s.sr:l==='srl'?lat(s.sr):l==='el'?s.el+' · '+lat(s.sr.split(' · ')[0]):s.en+' · '+lat(s.sr.split(' · ')[0]);};
+const feastFor=(p,l)=>{const s=p&&slavaOf(p.slava);return s&&(l==='sr'||l==='srl')?(l==='sr'?s.g:lat(s.g)):'';};
+TYPES.slava={ic:'🕯️',cls:'t-holiday',w:'slava'};
+/* Imendan (name days) by the Serbian Church calendar, civil dates; Latin spellings are added automatically */
+const SR_CAL_CYR=[
+ ['01-09',['Стефан','Стеван','Стефана','Стевана']],
+ ['01-14',['Василије','Васа']],
+ ['01-20',['Јован','Јована','Јованка']],
+ ['01-27',['Сава','Савка']],
+ ['02-14',['Трифун']],
+ ['05-06',['Ђорђе','Георгије','Ђурђа','Ђурђина']],
+ ['05-08',['Марко']],
+ ['06-03',['Константин','Јелена','Коста']],
+ ['06-28',['Лазар']],
+ ['07-12',['Петар','Павле','Петра','Пера']],
+ ['07-26',['Гаврило']],
+ ['08-02',['Илија','Илинка']],
+ ['08-07',['Ана']],
+ ['08-09',['Пантелија','Пантелејмон']],
+ ['08-28',['Марија','Мара']],
+ ['10-19',['Тома']],
+ ['10-27',['Петка','Параскева']],
+ ['10-31',['Лука']],
+ ['11-08',['Димитрије','Митар','Дмитар','Мита','Димитрина']],
+ ['11-21',['Михаило','Михајло','Миша','Михаела']],
+ ['12-13',['Андреја','Андрија']],
+ ['12-17',['Варвара']],
+ ['12-19',['Никола','Николина']]];
+const SR_CAL=SR_CAL_CYR.map(([d,ns])=>[d,[...new Set(ns.flatMap(n=>[n,lat(n),lat(n).replace(/đ/g,'dj').replace(/Đ/g,'Dj')]))]]);
+const SR_WISHES={
+ birthday:['Срећан рођендан, {name}! Желим ти здравље, срећу и много љубави. 🎂',
+  'Срећан рођендан, {name}! Нека ти се испуне све жеље. 🎉',
+  'Много здравља, осмеха и среће, {name}! Срећан рођендан!',
+  '{name}, нека ти нова година живота буде најлепша до сада! 🎈',
+  'Живели, {name}! Срећан рођендан! 🥂',
+  'Срећан рођендан, {name}! Хвала ти што постојиш у мом животу.',
+  'Све најлепше за рођендан, {name}! Уживај у сваком тренутку.',
+  'f|Срећан рођендан, {name}! Желим Вам добро здравље, личну срећу и пословне успехе.',
+  'f|Срдачне честитке поводом рођендана, {name}! Све најбоље!',
+  'h|Срећан рођендан, {name}! Не броји године, броји осмехе. 😄🎂',
+  'h|{name}, не стариш, само прелазиш на следећи ниво! Срећан рођендан! 🎮'],
+ nameday:['Срећан имендан, {name}! Много здравља и среће!',
+  'Срећан имендан, {name}! Нека те светитељ увек чува. 🌸',
+  '{name}, све најлепше за имендан! Желим ти здравље и много радости.',
+  'Живели, {name}! Срећан имендан! 🥂',
+  'Срећан имендан, {name}! Нека ти сваки дан доноси осмех.',
+  'f|Срећан имендан, {name}! Желим Вам здравље и благостање.',
+  'f|Срдачне честитке поводом имендана, {name}!',
+  'h|Срећан имендан, {name}! Данас ти частиш, таква је традиција! 😄',
+  'h|{name}, срећан имендан! Телефон ће ти данас прегорети. 📱🔥'],
+ slava:['Срећна слава, {name}! Нека вам светитељ буде у помоћи. 🕯️',
+  '{feast}, {name}! Много здравља, мира и благостања целој породици. 🕯️',
+  'Срећна слава и много здравља у вашем дому, {name}! 🍞🕯️',
+  '{name}, срећна вам слава! Нека вам свећа увек гори у радости.',
+  '{feast}, {name}! Нека трпеза увек буде пуна, а кућа срећна.',
+  'Срећна слава, {name}! Нека је сва ваша породица жива и здрава.',
+  'f|Срећна Вам слава, {name}! Желим Вама и Вашој породици здравље и благостање.',
+  'f|Срдачне честитке поводом крсне славе, {name}! Нека Вам светитељ буде у помоћи.',
+  'h|Срећна слава, {name}! Ја стижем, ти само спреми сарму! 😄'],
+ newyear:['Срећна Нова {year}. година, {name}! Здравље, срећа и успех!',
+  'Срећна Нова година, {name}! Нека {year}. буде пуна радости. ✨',
+  'Све најбоље у {year}. години, {name}! Много љубави и среће!',
+  'Живели, {name}! Нека {year}. буде најбоља до сада. 🥂',
+  'f|Срећна Нова година, {name}! Желим Вам здравље и успех у {year}. години.',
+  'f|Срећни празници и успешна {year}. година, {name}! Хвала на сарадњи.',
+  'h|Срећна Нова година, {name}! Нека ти одлуке издрже бар до фебруара! 😄'],
+ christmas:['Христос се роди, {name}! Срећан Божић! 🎄',
+  'Срећан Божић, {name}! Мир Божји, Христос се роди! ✨',
+  'Срећан Божић и много здравља у вашем дому, {name}!',
+  'Нека вам Божић донесе мир, радост и љубав, {name}. 🕯️',
+  'f|Срећан Божић, {name}! Желим Вама и Вашој породици мирне и благословене празнике.',
+  'f|Христос се роди! Срећни празници, {name}, и хвала на поверењу.',
+  'h|Срећан Божић, {name}! Ко нађе паричку у чесници, части све! 🪙😄'],
+ easter_o:['Христос воскресе, {name}! Срећан Ускрс! 🥚',
+  'Срећан Ускрс, {name}! Здравље, мир и радост целој породици.',
+  'Христос воскресе! Срећни празници, {name}! 🕯️',
+  'f|Срећан Ускрс, {name}! Желим Вам здравље и благословене празнике.',
+  'h|Срећан Ускрс, {name}! Нека твоје јаје буде борац и победи у куцању! 🥚😄'],
+ valentine:['Срећан Дан заљубљених, {name}! Волим те ❤️',
+  '{name}, сваки дан са тобом је празник. Волим те!',
+  'Волим те, љубави моја! Ти си најлепше што ми се десило. 💕',
+  '{name}, хвала ти за сваки осмех. Волим те! ❤️',
+  'Данас, сутра и заувек: ти. Срећан Дан заљубљених, {name}! ❤️',
+  'Срећан Дан заљубљених, {name}! Са тобом сваки дан има боју. 🌹',
+  'Ти си мој дом, {name}. ❤️',
+  '{name}, не треба ми 14. фебруар да ти кажем да те волим, али кажем ти и данас! ❤️',
+  'Срећан Трифундан и Дан заљубљених, {name}! Живели за љубав! 🍷',
+  'h|Волим те више од јутарње кафе, {name}! ☕❤️',
+  'h|{name}, последњи комад чоколаде увек чувам за тебе… скоро увек! 🍫😄',
+  'h|{name}, трпиш ме толико година, заслужујеш медаљу. 🏅❤️'],
+ love:['Добро јутро, {name}! Желим ти диван дан. Мислим на тебе ❤️',
+  '{name}, само да ти кажем колико ми је драго што постојиш.',
+  'Леп дан, {name}! Много те волим.',
+  'Мисао на тебе ми је измамила осмех, {name}. 😊',
+  'Хвала ти што си увек уз мене, {name}.',
+  'Добро јутро, {name}! Кафа је слађа кад мислим на тебе. ☕',
+  '{name}, шта год данас донесе, знај да сам ту за тебе.',
+  'Срећно данас, {name}! Све ће проћи одлично. 💪',
+  'Лаку ноћ, {name}! Слатки снови. 🌙',
+  '{name}, недостајеш ми. Једва чекам да те видим!',
+  'Ти си најлепши део мог дана, {name}. ❤️',
+  'Грлим те из далека, {name} 🤗',
+  'Желим ти лепу седмицу, {name}! Нека буде пуна лепих вести. ✨',
+  'Леп викенд, {name}! Одмори се и смеј се. 🌿',
+  'Волим те више него што речи могу да кажу, {name}.',
+  'Мали подсетник: ти си дивна особа, {name}! 💛',
+  '{name}, мисао на тебе ми улепшава дан. ☀️',
+  '{name}, живот је лепши са тобом.',
+  'Пошаљи ми осмех, {name}! Мислим на тебе. 😊',
+  '{name}, ти си моја омиљена мисао. ❤️']};
+WISHES.slava={en:['Happy Slava, {name}! Wishing health and joy to your whole family. 🕯️',
+  'Happy Slava, {name}! May your patron saint always watch over your home.',
+  'f|Happy Slava, {name}! Best wishes for health and prosperity to you and your family.'],
+ el:['Χρόνια πολλά για τη Σλάβα σας, {name}! Υγεία και ευλογία σε όλη την οικογένεια. 🕯️',
+  'Χρόνια πολλά, {name}! Ο Άγιος της οικογένειάς σας να σας σκεπάζει πάντα.',
+  'f|Θερμές ευχές για τη Σλάβα σας, {name}! Υγεία και πρόοδο σε εσάς και την οικογένειά σας.']};
+for(const [k,arr] of Object.entries(SR_WISHES)){WISHES[k].sr=arr;WISHES[k].srl=arr.map(lat);}
+LANGS.sr='Српски'; LANGS.srl='Srpski (latinica)';
+SIGN.sr='— Послато преко 🎉 Onomio'; SIGN.srl=lat(SIGN.sr);
+LOCALE.sr='sr-RS'; LOCALE.srl='sr-Latn-RS';
+I18N.sr={tag:'Имендани · Рођендани · Честитке',proto:'Пробна верзија. Особе које видите на почетку су примери; ваши подаци остају само на овом уређају.',
+  tabUp:'Предстоји',tabPeople:'Особе',tabSet:'Подешавања',today:'Данас',tomorrow:'Сутра',week:'Ове седмице',month:'Овог месеца',later:'Касније',
+  celebrate:'Имендан имају:',noFeast:'Данас у календару нема великих имендана.',yours:'🎉 Од ваших особа:',
+  freeBanner:'Бесплатна верзија подржава до <b>3 особе</b>. У пробној верзији видите све.',empty:'Додајте прву особу у картици „Особе”.',
+  nPeople:'Особа: {n}',sent:'✓ Послато',freeUpTo3:' · бесплатно до 3',addPerson:'+ Нова особа',example:'пример',noDates:'Нема датума',edit:'Измени',
+  plan:'План',free:'Бесплатно',premiumTrial:'Premium · проба',
+  freeDesc:'До 3 особе, готове честитке и потпис „Послато преко 🎉 Onomio” на крају сваке поруке.',
+  premDesc:'1,99 € месечно или 14,99 € годишње: неограничен број особа, честитке уз AI, слање свима одједном, без потписа.',
+  reminders:'Подсетници',remTime:'Време подсетника',remWhen:'Када да подсети',b0:'Истог дана',b1:'1 дан раније',b3:'3 дана раније',b7:'Седмицу дана раније',
+  remNote:'У пуној апликацији подсетник стиже као обавештење на телефону. У пробној верзији чува се само подешавање.',
+  remindWhat:'На шта да ме подсећа',cBday:'Рођендани',cNameday:'Имендани',cNewyear:'Нова година',cXmas:'Божић',cEaster:'Ускрс',cThanks:'Дан захвалности',cValentine:'Дан заљубљених',cLove:'Љубавне поруке',cLocal:'Локални обичаји',
+  myWishes:'Моје честитке',myWishesHelp:'Напишите своју честитку. Појављује се прва, пре готових. <b>{name}</b> се замењује именом примаоца.',
+  occasion:'Прилика',language:'Језик',myWish:'Моја честитка',myWishPh:'нпр. Срећан рођендан, {name}! Волимо те.',saveWish:'Сачувај честитку',resetWish:'Врати готову',
+  look:'Изглед, језик и потпис',appLang:'Језик апликације',auto:'Аутоматски (према телефону)',mySig:'Мој потпис на крају порука',sigPh:'нпр. Воли те, Тео',
+  freeSigNote:'Бесплатна верзија додаје потпис „{sig}”.',
+  howHol:'Како функционишу празници',howHol1:'Сваки прималац има своју земљу и језик. Апликација користи празнике те земље: православни или католички Ускрс, Божић 25. децембра или 7. јануара, Дан захвалности итд.',
+  howHol2:'Ускрс {y}: католички {w}, православни {o}. Рачуна се аутоматски сваке године.',howHol3:'Календари имендана: Србија, Грчка, Кипар, Пољска, Бугарска, Румунија, Летонија. За друге земље унесите датум ручно.',
+  data:'Подаци',dataNote:'Ваше особе остају само на овом уређају. Ништа се нигде не шаље.',privacy:'Политика приватности',contact:'Контакт',
+  resetEx:'Врати примере',confirmAgain:'Притисните поново за потврду',
+  saved:'Сачувано',writeFirst:'Прво напишите честитку',wishSaved:'Честитка је сачувана',wishReset:'Враћена је готова честитка',examplesBack:'Примери су враћени',
+  todayLow:'данас',wishLang:'Језик честитке',tone:'Стил',another:'↻ Друга честитка',msgTo:'Порука за: {name}',sigHint:'На крају се додаје: „{sig}”. Уклања се уз Premium.',
+  copy:'Копирај',copyHint:'Ако се апликација не отвори, притисните „Копирај” и налепите поруку.',close:'Затвори',toAll:'Свима',iSent:'Послато ✓',
+  copied:'Копирано',selected:'Текст је означен: користите Копирај из менија',aiSoon:'Личне честитке уз AI стижу у пуној апликацији',premiumOnly:'Доступно у Premium верзији',
+  allPremium:'Слање свима одједном је у Premium верзији',allMarked:'Све је означено као послато',nextP:'Следећи: {name}',allDone:'Браво! Све честитке су послате',
+  newP:'Нова особа',editP:'Измена особе',name:'Име',namePh:'нпр. Никола',rel:'Однос',relPh:'нпр. Сестра',country:'Земља примаоца',wishLang2:'Језик честитки',
+  bdayL:'Рођендан',ndL:'Имендан (ако није пронађен аутоматски)',loveL:'💌 Љубавне поруке',weekday:'Дан у седмици',partner:'Партнер / супружник (подсетник за Дан заљубљених)',
+  phone:'Мобилни (није обавезно)',email:'Имејл (није обавезно)',del:'Обриши',sure:'Да ли сте сигурни?',cancel:'Откажи',save:'Сачувај',
+  hintManual:'Користиће се датум који сте унели.',hintFound:'Пронађен имендан: {d}',hintNotInCal:'Овог имена нема у календару. Унесите датум ручно.',
+  hintNoCal:'Још немамо календар имендана за ову земљу. Ако се слави, унесите датум ручно.',deleted:'Обрисано',added:'Додато',
+  lf_:'Не',lf_daily:'Сваког дана',lf_weekly:'Једном седмично',lf_monthly:'Једном месечно',
+  t_birthday:'Рођендан',t_nameday:'Имендан',t_newyear:'Нова година',t_christmas:'Божић',t_christmas_j:'Божић (7. јануар)',t_wigilia:'Wigilia · Бадње вече у Пољској',
+  t_easter_o:'Ускрс (православни)',t_easter_w:'Ускрс (католички)',t_thanks_us:'Дан захвалности (САД)',t_thanks_ca:'Дан захвалности (Канада)',t_valentine:'Дан заљубљених',t_love:'Љубавна порука',t_thanksgiving:'Дан захвалности',
+  t_martisor:'Mărțișor · 1. март (Румунија)',t_dragobete:'Dragobete · дан љубави (Румунија)',t_ligo:'Līgo / Jāņi · Ивањдан у Летонији',
+  tn_auto:'Аутоматски',tn_w:'Топао',tn_f:'Званичан',tn_h:'Забаван',ac_pink:'Розе',ac_violet:'Љубичаста',ac_mint:'Тиркизна',ac_sun:'Златна',
+  inDay:'за {n} дан',inDays:'за {n} дана'};
+const SLAVA_I18N={
+ el:{cSlava:'Σλάβα (Σερβία)',t_slava:'Σλάβα · οικογενειακή γιορτή',slavaL:'Σλάβα (Άγιος της οικογένειας)',slavaNone:'Καμία / δεν ξέρω',slavaToday:'Σλάβα σήμερα:',
+   howHol3:'Εορτολόγια: Ελλάδα, Κύπρος, Πολωνία, Βουλγαρία, Ρουμανία, Λετονία, Σερβία (και Σλάβα). Για τις άλλες χώρες βάζεις την ονομαστική εορτή με το χέρι.'},
+ en:{cSlava:'Slava (Serbia)',t_slava:'Slava · family feast',slavaL:'Slava (family patron saint)',slavaNone:'None / not sure',slavaToday:'Slava today:',
+   howHol3:'Name-day calendars: Greece, Cyprus, Poland, Bulgaria, Romania, Latvia, Serbia (plus Slava). For other countries, enter the name day yourself.'},
+ pl:{cSlava:'Slava (Serbia)',t_slava:'Slava · święto rodzinne',slavaL:'Slava (rodzinny patron)',slavaNone:'Brak / nie wiem',slavaToday:'Slava dzisiaj:',
+   howHol3:'Kalendarze imienin: Grecja, Cypr, Polska, Bułgaria, Rumunia, Łotwa, Serbia (oraz Slava). Dla innych krajów wpisz imieniny ręcznie.'},
+ bg:{cSlava:'Слава (Сърбия)',t_slava:'Слава · семеен празник',slavaL:'Слава (семеен светец)',slavaNone:'Няма / не знам',slavaToday:'Слава днес:',
+   howHol3:'Календари на имените дни: България, Гърция, Кипър, Полша, Румъния, Латвия, Сърбия (и Слава). За други държави въведете датата ръчно.'},
+ ro:{cSlava:'Slava (Serbia)',t_slava:'Slava · sărbătoarea familiei',slavaL:'Slava (sfântul familiei)',slavaNone:'Niciuna / nu știu',slavaToday:'Slava azi:',
+   howHol3:'Calendare de onomastici: România, Grecia, Cipru, Polonia, Bulgaria, Letonia, Serbia (și Slava). Pentru alte țări introdu data manual.'},
+ lv:{cSlava:'Slava (Serbija)',t_slava:'Slava · ģimenes svētki',slavaL:'Slava (ģimenes svētais)',slavaNone:'Nav / nezinu',slavaToday:'Slava šodien:',
+   howHol3:'Vārda dienu kalendāri: Latvija, Grieķija, Kipra, Polija, Bulgārija, Rumānija, Serbija (un Slava). Citām valstīm ievadi datumu pats.'},
+ sr:{cSlava:'Крсна слава',t_slava:'Крсна слава',slavaL:'Крсна слава (породична)',slavaNone:'Нема / не знам',slavaToday:'Данас је слава:'}};
+for(const [l,o] of Object.entries(SLAVA_I18N)) Object.assign(I18N[l],o);
+I18N.srl=Object.fromEntries(Object.entries(I18N.sr).map(([k,v])=>[k,lat(v)]));
+SAMPLES.sr=[
+  {id:'p1',name:'Јелена',rel:'Супруга',country:'RS',lang:'sr',bday:'03-14',partner:true,love:'daily',loveDay:5},
+  {id:'p2',name:'Никола',rel:'Кум',country:'RS',lang:'sr',bday:'02-02',slava:'nikoljdan'},
+  {id:'p3',name:'Марија',rel:'Мајка',country:'RS',lang:'sr',bday:'06-30',slava:'mitrovdan'},
+  {id:'p4',name:'Марко',rel:'Брат',country:'RS',lang:'sr',bday:'09-03',slava:'mitrovdan'},
+  {id:'p5',name:'Νίκος',rel:'Пријатељ из Грчке',country:'GR',lang:'el',bday:'11-19'},
+  {id:'p6',name:'Sarah',rel:'Колегиница',country:'US',lang:'en',bday:'12-12'}];
+SAMPLES.srl=SAMPLES.sr.map(p=>({...p,name:p.lang==='sr'?lat(p.name):p.name,rel:lat(p.rel),lang:p.lang==='sr'?'srl':p.lang}));
+
+/* ---------- Mother's Day, Father's Day, Women's Day (8 March), National days ---------- */
+/* Rules: 'MM-DD' fixed · 'M/W/N' N-th weekday (W: 0=Sun) of month M · 'M/W/L' last weekday · 'Ew:n' western Easter + n days */
+const MOTHER_DAY={AL:'03-08',AM:'04-07',AO:'5/0/1',AT:'5/0/2',AU:'5/0/2',BE:'5/0/2',BO:'05-27',BR:'5/0/2',BS:'5/0/2',BW:'5/0/2',CA:'5/0/2',CH:'5/0/2',CR:'08-15',CY:'5/0/2',CZ:'5/0/2',DE:'5/0/2',DK:'5/0/2',EE:'5/0/2',ES:'5/0/1',FI:'5/0/2',FR:'5/0/L',GB:'Ew:-21',GE:'03-03',GR:'5/0/2',GT:'05-10',HN:'5/1/2',HR:'5/0/2',HU:'5/0/1',IE:'Ew:-21',IS:'5/0/2',IT:'5/0/2',LI:'5/0/2',LT:'5/0/1',LV:'5/0/2',MT:'5/0/2',MW:'10-15',MX:'05-10',MZ:'5/0/1',NI:'05-30',NL:'5/0/2',NO:'2/0/2',PA:'12-08',PL:'05-26',PR:'5/0/2',PT:'5/0/1',RO:'5/0/1',SE:'5/0/L',SI:'03-25',SK:'5/0/2',SM:'5/0/2',SV:'05-10',TW:'5/0/2',US:'5/0/2',ZA:'5/0/2',ZW:'5/0/2',
+ RU:'11/0/L',UA:'5/0/2',BY:'10-14',TR:'5/0/2',JP:'5/0/2',CN:'5/0/2',IN:'5/0/2',PH:'5/0/2',SG:'5/0/2',MY:'5/0/2',NZ:'5/0/2',AR:'10/0/3',CL:'5/0/2',CO:'5/0/2',PE:'5/0/2',EC:'5/0/2',VE:'5/0/2',UY:'5/0/2',PY:'05-15',DO:'5/0/L',KR:'05-08',TH:'08-12',ID:'12-22',
+ EG:'03-21',LB:'03-21',JO:'03-21',SY:'03-21',IQ:'03-21',SA:'03-21',AE:'03-21',KW:'03-21',QA:'03-21',BH:'03-21',OM:'03-21',PS:'03-21',YE:'03-21',SD:'03-21',LY:'03-21'};
+const FATHER_DAY={GR:'6/0/3',CY:'6/0/3',RO:'5/0/2',LV:'9/0/2',PL:'06-23',DE:'Ew:39',AT:'6/0/2',CH:'6/0/1',BE:'6/0/2',FR:'6/0/3',IT:'03-19',ES:'03-19',PT:'03-19',HR:'03-19',BO:'03-19',HN:'03-19',
+ GB:'6/0/3',IE:'6/0/3',US:'6/0/3',CA:'6/0/3',NL:'6/0/3',ZA:'6/0/3',ZW:'6/0/3',PR:'6/0/3',SK:'6/0/3',CZ:'6/0/3',HU:'6/0/3',UA:'6/0/3',TR:'6/0/3',JP:'6/0/3',CN:'6/0/3',IN:'6/0/3',PH:'6/0/3',SG:'6/0/3',MY:'6/0/3',AR:'6/0/3',MX:'6/0/3',CL:'6/0/3',CO:'6/0/3',PE:'6/0/3',EC:'6/0/3',VE:'6/0/3',
+ AU:'9/0/1',NZ:'9/0/1',BR:'8/0/2',LT:'6/0/1',EE:'11/0/2',FI:'11/0/2',NO:'11/0/2',SE:'11/0/2',DK:'06-05',GT:'06-17',SV:'06-17',NI:'06-23',TW:'08-08',KR:'05-08',TH:'12-05',ID:'11-12'};
+const WOMEN_DAY={ZA:'08-09',GA:'04-17'};
+for(const c of 'AL AM AZ BA BG BY CN CU GE HR IT KG KZ LT LV MD ME MK MN PL RO RS RU SI SK TJ TM UA UZ VN CZ HU AO BF ER GW KH LA MG NP UG ZM SL SS NO'.split(' ')) WOMEN_DAY[c]='03-08';
+/* Main national day per country (one per country; verify before release) */
+const NATIONAL_DAY={AD:'09-08',AE:'12-02',AF:'08-19',AG:'11-01',AL:'11-28',AM:'09-21',AO:'11-11',AR:'05-25',AT:'10-26',AU:'01-26',AZ:'05-28',BB:'11-30',BD:'03-26',BE:'07-21',BF:'12-11',BG:'03-03',BH:'12-16',BI:'07-01',BJ:'08-01',BN:'02-23',BO:'08-06',BR:'09-07',BS:'07-10',BT:'12-17',BW:'09-30',BY:'07-03',BZ:'09-21',
+ CA:'07-01',CD:'06-30',CF:'12-01',CG:'08-15',CH:'08-01',CI:'08-07',CL:'09-18',CM:'05-20',CN:'10-01',CO:'07-20',CR:'09-15',CV:'07-05',CY:'10-01',CZ:'10-28',DE:'10-03',DJ:'06-27',DK:'06-05',DM:'11-03',DO:'02-27',DZ:'07-05',EC:'08-10',EE:'02-24',EG:'07-23',ER:'05-24',ES:'10-12',ET:'05-28',
+ FI:'12-06',FJ:'10-10',FM:'11-03',FR:'07-14',GA:'08-17',GD:'02-07',GE:'05-26',GH:'03-06',GM:'02-18',GN:'10-02',GQ:'10-12',GR:'03-25',GT:'09-15',GW:'09-24',GY:'02-23',HN:'09-15',HR:'05-30',HU:'08-20',ID:'08-17',IE:'03-17',IN:'08-15',IQ:'10-03',IS:'06-17',IT:'06-02',
+ JM:'08-06',JO:'05-25',JP:'02-11',KE:'12-12',KG:'08-31',KH:'11-09',KI:'07-12',KM:'07-06',KN:'09-19',KR:'08-15',KW:'02-25',KZ:'10-25',LA:'12-02',LB:'11-22',LC:'02-22',LI:'08-15',LK:'02-04',LR:'07-26',LS:'10-04',LT:'02-16',LU:'06-23',LV:'11-18',LY:'12-24',
+ MA:'07-30',MC:'11-19',MD:'08-27',ME:'07-13',MG:'06-26',MK:'09-08',ML:'09-22',MM:'01-04',MN:'07-11',MR:'11-28',MT:'09-21',MU:'03-12',MV:'07-26',MW:'07-06',MX:'09-16',MY:'08-31',MZ:'06-25',NA:'03-21',NE:'12-18',NG:'10-01',NI:'09-15',NL:'04-27',NO:'05-17',NP:'09-20',NR:'01-31',NZ:'02-06',
+ PA:'11-03',PE:'07-28',PG:'09-16',PH:'06-12',PK:'08-14',PL:'11-11',PT:'06-10',PY:'05-15',QA:'12-18',RO:'12-01',RS:'02-15',RU:'06-12',RW:'07-01',SA:'09-23',SB:'07-07',SC:'06-29',SE:'06-06',SG:'08-09',SI:'06-25',SK:'09-01',SL:'04-27',SM:'09-03',SN:'04-04',SO:'07-01',SR:'11-25',SS:'07-09',ST:'07-12',SV:'09-15',SY:'04-17',SZ:'09-06',
+ TD:'08-11',TG:'04-27',TH:'12-05',TJ:'09-09',TL:'11-28',TM:'09-27',TN:'03-20',TO:'11-04',TR:'10-29',TT:'08-31',TV:'10-01',TW:'10-10',TZ:'04-26',UA:'08-24',UG:'10-09',US:'07-04',UY:'08-25',UZ:'09-01',VC:'10-27',VE:'07-05',VN:'09-02',VU:'07-30',WS:'06-01',XK:'02-17',YE:'05-22',ZA:'04-27',ZM:'10-24',ZW:'04-18'};
+function lastWeekday(y,month,weekday){const last=new Date(y,month+1,0);return new Date(y,month,last.getDate()-((last.getDay()-weekday+7)%7));}
+function ruleFn(r){if(!r)return null;
+  if(/^\d\d-\d\d$/.test(r)) return fixedFn(r);
+  if(r.startsWith('Ew:')){const n=+r.slice(3);return y=>addDays(westernEaster(y),n);}
+  const [m,w,n]=r.split('/');return n==='L'?(y=>lastWeekday(y,+m-1,+w)):(y=>nthWeekday(y,+m-1,+w,+n));}
+const flagOf=cc=>/^[A-Z]{2}$/.test(cc||'')?String.fromCodePoint(...[...cc].map(ch=>0x1F1A5+ch.charCodeAt(0))):'';
+const MOTHER_RE=/μητέρα|μητερα|μαμά|μαμα|γιαγιά|mother|mom\b|mum\b|grandma|grandmother|matka|mama|mamusia|babcia|майка|мама|баба|mamă|mama|bunică|bunica|māte|mamma|vecmāmiņa|мајка|бака|majka|baka/i;
+const FATHER_RE=/πατέρας|πατερας|μπαμπάς|μπαμπας|παππούς|father|dad\b|grandpa|grandfather|ojciec|tata|dziadek|баща|татко|дядо|tată|tata|bunic|tēvs|tētis|vectēvs|отац|тата|деда|otac|deda/i;
+const WOMAN_RE=/αδερφή|αδελφή|κόρη|θεία|ανιψιά|φίλη|συνάδελφος|wife|sister|daughter|aunt|girlfriend|niece|żona|siostra|córka|ciocia|przyjaciółka|koleżanka|съпруга|сестра|дъщеря|леля|приятелка|колежка|soție|soră|fiică|mătușă|prietenă|colegă|sieva|māsa|meita|tante|draudzene|kolēģe|супруга|ћерка|тетка|другарица|колегиница|supruga|sestra|ćerka|tetka|koleginica/i;
+const MAN_RE=/αδερφός|αδελφός|γιος|θείος|ανιψιός|husband|brother|son\b|uncle|boyfriend|mąż|brat|syn|wujek|съпруг|брат|син|чичо|soț|frate|fiu|unchi|vīrs|brālis|dēls|onkulis|супруг|брат|син|ујак|стриц|suprug|sin|ujak/i;
+const roleOf=p=>p.role||(MOTHER_RE.test(p.rel||'')?'mother':FATHER_RE.test(p.rel||'')?'father':WOMAN_RE.test(p.rel||'')?'woman':MAN_RE.test(p.rel||'')?'man':'');
+const ROLES=['','woman','mother','man','father'];
+Object.assign(TYPES,{mothers:{ic:'💐',cls:'t-holiday',w:'mothers'},fathers:{ic:'👔',cls:'t-holiday',w:'fathers'},womens:{ic:'🌷',cls:'t-holiday',w:'womens'},national:{ic:'🏛️',cls:'t-holiday',w:'national'}});
+WISHES.mothers={
+ el:['Χρόνια πολλά για τη Γιορτή της Μητέρας, {name}! Σ’ ευχαριστώ για όλα. 💐','Χρόνια πολλά, {name}! Είσαι η καλύτερη μαμά του κόσμου. ❤️','Για όλη την αγάπη και τη φροντίδα σου, {name}: χρόνια πολλά! 🌷','f|Χρόνια πολλά για τη Γιορτή της Μητέρας, {name}!','h|Χρόνια πολλά, {name}! Ναι, φάγαμε καλά και ναι, φορέσαμε ζακέτα! 😄💐'],
+ en:['Happy Mother’s Day, {name}! Thank you for everything. 💐','Happy Mother’s Day, {name}! You’re the best mum in the world. ❤️','For all your love and care, {name}: happy Mother’s Day! 🌷','f|Warm wishes on Mother’s Day, {name}!','h|Happy Mother’s Day, {name}! Yes, I ate well, and yes, I took a jacket! 😄💐'],
+ pl:['Wszystkiego najlepszego z okazji Dnia Matki, {name}! Dziękuję za wszystko. 💐','Kochana {name}, jesteś najlepszą mamą na świecie! ❤️','Za całą Twoją miłość i troskę, {name}: wszystkiego najlepszego! 🌷','f|Serdeczne życzenia z okazji Dnia Matki, {name}!','h|Wszystkiego najlepszego, {name}! Twój obiad wciąż jest najlepszy na świecie! 😄💐'],
+ bg:['Честит празник, {name}! Благодаря ти за всичко. 💐','{name}, ти си най-добрата майка на света! ❤️','За цялата ти обич и грижа, {name}: честит празник! 🌷','f|Сърдечни поздрави по случай Деня на майката, {name}!'],
+ ro:['La mulți ani de Ziua Mamei, {name}! Îți mulțumesc pentru tot. 💐','{name}, ești cea mai bună mamă din lume! ❤️','Pentru toată dragostea și grija ta, {name}: la mulți ani! 🌷','f|La mulți ani de Ziua Mamei, {name}!','h|La mulți ani, {name}! Da, am mâncat și da, mi-am luat geaca! 😄💐'],
+ lv:['Daudz laimes Mātes dienā, {name}! Paldies par visu. 💐','{name}, tu esi labākā mamma pasaulē! ❤️','Par visu tavu mīlestību un rūpēm, {name}: daudz laimes Mātes dienā! 🌷','f|Sirsnīgi sveicu Mātes dienā, {name}!','h|Daudz laimes Mātes dienā, {name}! Jā, es paēdu, un jā, paņēmu jaku! 😄💐'],
+ sr:['Срећан Дан мајки, {name}! Хвала ти за све. 💐','{name}, ти си најбоља мама на свету! ❤️','За сву твоју љубав и бригу, {name}: срећан празник! 🌷','f|Срдачне честитке поводом Дана мајки, {name}!']};
+WISHES.fathers={
+ el:['Χρόνια πολλά για τη Γιορτή του Πατέρα, {name}! Σ’ ευχαριστώ για όλα. 👔','Χρόνια πολλά, {name}! Είσαι ο καλύτερος μπαμπάς του κόσμου. ❤️','Για όλη τη στήριξη και την αγάπη σου, {name}: χρόνια πολλά! 💪','f|Χρόνια πολλά για τη Γιορτή του Πατέρα, {name}!','h|Χρόνια πολλά, {name}! Σήμερα το τηλεκοντρόλ είναι όλο δικό σου. 😄📺'],
+ en:['Happy Father’s Day, {name}! Thank you for everything. 👔','Happy Father’s Day, {name}! You’re the best dad in the world. ❤️','For all your support and love, {name}: happy Father’s Day! 💪','f|Warm wishes on Father’s Day, {name}!','h|Happy Father’s Day, {name}! Today the remote is all yours. 😄📺'],
+ pl:['Wszystkiego najlepszego z okazji Dnia Ojca, {name}! Dziękuję za wszystko. 👔','{name}, jesteś najlepszym tatą na świecie! ❤️','Za całe Twoje wsparcie i miłość, {name}: wszystkiego najlepszego! 💪','f|Serdeczne życzenia z okazji Dnia Ojca, {name}!','h|Wszystkiego najlepszego, {name}! Dziś pilot jest tylko Twój. 😄📺'],
+ bg:['Честит празник, {name}! Благодаря ти за всичко. 👔','{name}, ти си най-добрият баща на света! ❤️','За цялата ти подкрепа и обич, {name}: честит празник! 💪','f|Сърдечни поздрави по случай Деня на бащата, {name}!'],
+ ro:['La mulți ani de Ziua Tatălui, {name}! Îți mulțumesc pentru tot. 👔','{name}, ești cel mai bun tată din lume! ❤️','Pentru tot sprijinul și dragostea ta, {name}: la mulți ani! 💪','f|La mulți ani de Ziua Tatălui, {name}!','h|La mulți ani, {name}! Azi telecomanda e numai a ta. 😄📺'],
+ lv:['Daudz laimes Tēva dienā, {name}! Paldies par visu. 👔','{name}, tu esi labākais tētis pasaulē! ❤️','Par visu tavu atbalstu un mīlestību, {name}: daudz laimes Tēva dienā! 💪','f|Sirsnīgi sveicu Tēva dienā, {name}!','h|Daudz laimes Tēva dienā, {name}! Šodien pults ir tikai tava. 😄📺'],
+ sr:['Срећан Дан очева, {name}! Хвала ти за све. 👔','{name}, ти си најбољи тата на свету! ❤️','За сву твоју подршку и љубав, {name}: срећан празник! 💪','f|Срдачне честитке поводом Дана очева, {name}!']};
+WISHES.womens={
+ el:['Χρόνια πολλά για την Ημέρα της Γυναίκας, {name}! 🌷','Καλή Ημέρα της Γυναίκας, {name}! Να είσαι πάντα δυνατή και χαμογελαστή. 💐','f|Χρόνια πολλά για την Παγκόσμια Ημέρα της Γυναίκας, {name}!','h|Χρόνια πολλά, {name}! Σήμερα τα πιάτα τα πλένουμε εμείς. 😄🌷'],
+ en:['Happy Women’s Day, {name}! 🌷','Happy 8th of March, {name}! Stay strong and keep smiling. 💐','f|Happy International Women’s Day, {name}!','h|Happy Women’s Day, {name}! Today the dishes are on us. 😄🌷'],
+ pl:['Wszystkiego najlepszego z okazji Dnia Kobiet, {name}! 🌷','Z okazji 8 marca, {name}: dużo uśmiechu i siły! 💐','f|Najlepsze życzenia z okazji Dnia Kobiet, {name}!','h|Wszystkiego najlepszego, {name}! Dziś zmywanie bierzemy na siebie. 😄🌷'],
+ bg:['Честит 8 март, {name}! 🌷','Честит празник, {name}! Бъди винаги усмихната и обичана. 💐','f|Честит Международен ден на жената, {name}!','h|Честит 8 март, {name}! Днес чиниите са наша грижа. 😄🌷'],
+ ro:['La mulți ani de 8 Martie, {name}! 🌷','La mulți ani, {name}! Să fii mereu iubită și zâmbitoare. 💐','f|La mulți ani de Ziua Internațională a Femeii, {name}!','h|La mulți ani de 8 Martie, {name}! Azi vasele le spălăm noi. 😄🌷'],
+ lv:['Daudz laimes Starptautiskajā sieviešu dienā, {name}! 🌷','Skaistu 8. martu, {name}! Lai tev daudz smaidu un spēka. 💐','f|Sirsnīgi sveicu Starptautiskajā sieviešu dienā, {name}!','h|Daudz laimes 8. martā, {name}! Šodien traukus mazgājam mēs. 😄🌷'],
+ sr:['Срећан 8. март, {name}! 🌷','Срећан Дан жена, {name}! Нека си увек вољена и насмејана. 💐','f|Срећан Међународни дан жена, {name}!','h|Срећан 8. март, {name}! Данас судове перемо ми. 😄🌷']};
+WISHES.national={
+ el:['Χρόνια πολλά για την εθνική επέτειο, {name}! {flag}','Χρόνια πολλά, {name}! Καλή γιορτή σε σένα και σε όλη την πατρίδα. {flag}','f|Θερμές ευχές για την εθνική επέτειο, {name}! {flag}'],
+ en:['Happy National Day, {name}! {flag}','Happy National Day, {name}! Celebrating with you from afar. {flag}','f|Warm wishes on your National Day, {name}! {flag}'],
+ pl:['Wszystkiego najlepszego z okazji święta narodowego, {name}! {flag}','Z okazji święta narodowego, {name}: świętuję razem z Tobą! {flag}','f|Serdeczne życzenia z okazji święta narodowego, {name}! {flag}'],
+ bg:['Честит национален празник, {name}! {flag}','Честит празник, {name}! Празнувам заедно с теб отдалеч. {flag}','f|Сърдечни поздрави за националния празник, {name}! {flag}'],
+ ro:['La mulți ani de Ziua Națională, {name}! {flag}','La mulți ani, {name}! Sărbătoresc alături de tine, de departe. {flag}','f|Sincere felicitări de Ziua Națională, {name}! {flag}'],
+ lv:['Daudz laimes valsts svētkos, {name}! {flag}','Priecīgus valsts svētkus, {name}! Svinu kopā ar tevi no tālienes. {flag}','f|Sirsnīgi sveicu valsts svētkos, {name}! {flag}'],
+ sr:['Срећан национални празник, {name}! {flag}','Срећан празник, {name}! Славим са тобом из далека. {flag}','f|Срдачне честитке поводом националног празника, {name}! {flag}']};
+for(const k of ['mothers','fathers','womens','national']) WISHES[k].srl=WISHES[k].sr.map(lat);
+const FAM_I18N={
+ el:{cFamily:'Μητέρας, Πατέρα, 8 Μαρτίου',cNational:'Εθνικές επέτειοι',t_mothers:'Γιορτή της Μητέρας',t_fathers:'Γιορτή του Πατέρα',t_womens:'Ημέρα της Γυναίκας · 8 Μαρτίου',t_national:'Εθνική επέτειος',roleL:'Για Γιορτή Μητέρας/Πατέρα και 8 Μαρτίου',role_:'— (αυτόματα από τη σχέση)',role_woman:'Γυναίκα',role_mother:'Μητέρα / γιαγιά',role_man:'Άνδρας',role_father:'Πατέρας / παππούς'},
+ en:{cFamily:'Mother’s, Father’s, Women’s Day',cNational:'National days',t_mothers:'Mother’s Day',t_fathers:'Father’s Day',t_womens:'Women’s Day · 8 March',t_national:'National day',roleL:'For Mother’s/Father’s Day and 8 March',role_:'— (auto from relationship)',role_woman:'Woman',role_mother:'Mother / grandmother',role_man:'Man',role_father:'Father / grandfather'},
+ pl:{cFamily:'Dzień Matki, Ojca, Kobiet',cNational:'Święta narodowe',t_mothers:'Dzień Matki',t_fathers:'Dzień Ojca',t_womens:'Dzień Kobiet · 8 marca',t_national:'Święto narodowe',roleL:'Do Dnia Matki/Ojca i 8 marca',role_:'— (automatycznie z relacji)',role_woman:'Kobieta',role_mother:'Matka / babcia',role_man:'Mężczyzna',role_father:'Ojciec / dziadek'},
+ bg:{cFamily:'Ден на майката, бащата, 8 март',cNational:'Национални празници',t_mothers:'Ден на майката',t_fathers:'Ден на бащата',t_womens:'8 март · Ден на жената',t_national:'Национален празник',roleL:'За Деня на майката/бащата и 8 март',role_:'— (автоматично от връзката)',role_woman:'Жена',role_mother:'Майка / баба',role_man:'Мъж',role_father:'Баща / дядо'},
+ ro:{cFamily:'Ziua Mamei, a Tatălui, 8 Martie',cNational:'Zile naționale',t_mothers:'Ziua Mamei',t_fathers:'Ziua Tatălui',t_womens:'8 Martie · Ziua Femeii',t_national:'Ziua Națională',roleL:'Pentru Ziua Mamei/Tatălui și 8 Martie',role_:'— (automat din relație)',role_woman:'Femeie',role_mother:'Mamă / bunică',role_man:'Bărbat',role_father:'Tată / bunic'},
+ lv:{cFamily:'Mātes, Tēva, Sieviešu diena',cNational:'Valsts svētki',t_mothers:'Mātes diena',t_fathers:'Tēva diena',t_womens:'Sieviešu diena · 8. marts',t_national:'Valsts svētki',roleL:'Mātes/Tēva dienai un 8. martam',role_:'— (automātiski no attiecībām)',role_woman:'Sieviete',role_mother:'Māte / vecmāmiņa',role_man:'Vīrietis',role_father:'Tēvs / vectēvs'},
+ sr:{cFamily:'Дан мајки, очева, 8. март',cNational:'Државни празници',t_mothers:'Дан мајки',t_fathers:'Дан очева',t_womens:'8. март · Дан жена',t_national:'Државни празник',roleL:'За Дан мајки/очева и 8. март',role_:'— (аутоматски према односу)',role_woman:'Жена',role_mother:'Мајка / бака',role_man:'Мушкарац',role_father:'Отац / деда'}};
+for(const [l,o] of Object.entries(FAM_I18N)) Object.assign(I18N[l],o);
+I18N.srl=Object.fromEntries(Object.entries(I18N.sr).map(([k,v])=>[k,lat(v)]));
+
+/* ---------- Greek vocative, call name, onboarding, contact import ---------- */
+const GR_VOW=/[αεηιουωάέήίόύώϊϋΐΰ]+/g, GR_ACC=/[άέήίόύώΐΰ]/;
+function vocWordEl(w){const r=vocWordEl0(w);return w.length>1&&w===w.toUpperCase()?r.toUpperCase():r;}
+function vocWordEl0(w){
+  if(!/[α-ωά-ώ]/i.test(w)) return w;
+  const low=w.toLowerCase();
+  if(/ος$/.test(low)){const stem=w.slice(0,-2), i=stem.search(GR_ACC);
+    if(i<0) return stem+'ο';
+    const after=stem.slice(i+1).toLowerCase().replace(/^[ιυ]/,'');
+    return stem+((after.match(GR_VOW)||[]).length?'ε':'ο');}
+  if(/ός$/.test(low)) return w.slice(0,-2)+'έ';
+  if(/(ας|άς|ης|ής)$/.test(low)) return w.slice(0,-1);
+  return w;
+}
+const vocEl=n=>String(n||'').split(/(\s+)/).map(vocWordEl).join('');
+const callName=(p,lang)=>p.call?p.call:lang==='el'?vocEl(p.name):p.name;
+const PHONE_CC=[['+357','CY'],['+359','BG'],['+381','RS'],['+382','ME'],['+371','LV'],['+30','GR'],['+48','PL'],['+40','RO'],['+44','GB'],['+49','DE'],['+33','FR'],['+39','IT'],['+34','ES'],['+353','IE'],['+61','AU'],['+1','US']];
+function ccFromPhone(tel,def){const t=String(tel||'').replace(/[^\d+]/g,'').replace(/^00/,'+');const hit=PHONE_CC.find(([p])=>t.startsWith(p));return hit?hit[1]:def;}
+function parseVcf(txt){
+  const lines=String(txt).replace(/\r\n[ \t]/g,'').replace(/\n[ \t]/g,'').split(/\r?\n/), out=[]; let c=null;
+  const val=l=>l.slice(l.indexOf(':')+1).trim().replace(/\\,/g,',').replace(/\\;/g,';');
+  for(const l of lines){const u=l.toUpperCase();
+    if(u.startsWith('BEGIN:VCARD')) c={};
+    else if(u.startsWith('END:VCARD')){ if(c&&(c.fn||c.n)) out.push(c); c=null; }
+    else if(!c) continue;
+    else if(u.startsWith('FN')) c.fn=val(l);
+    else if(u.startsWith('N:')||u.startsWith('N;')){const p=val(l).split(';');c.n=[p[1],p[0]].filter(Boolean).join(' ');}
+    else if(u.startsWith('TEL')&&!c.tel) c.tel=val(l);
+    else if(u.startsWith('EMAIL')&&!c.email) c.email=val(l);
+    else if(u.startsWith('BDAY')){const b=val(l).replace(/-/g,'');const m=b.match(/(\d{2})(\d{2})$/); if(m) c.bday=m[1]+'-'+m[2];}
+  }
+  return out.map(x=>({name:(x.fn||x.n||'').trim(),phone:x.tel||'',email:x.email||'',bday:x.bday||''})).filter(x=>x.name);
+}
+function addImported(list){
+  if(S.people.every(p=>p.ex)) S.people=[];
+  const have=new Set(S.people.map(p=>p.name.toLowerCase())); let n=0;
+  const defC=UI==='el'?'GR':UI==='pl'?'PL':UI==='bg'?'BG':UI==='ro'?'RO':UI==='lv'?'LV':(UI==='sr'||UI==='srl')?'RS':'GB';
+  for(const x of list){ if(have.has(x.name.toLowerCase())) continue; const cc=ccFromPhone(x.phone,defC);
+    S.people.push({id:'p'+Date.now()+'_'+(n++),name:x.name,rel:'',country:cc,lang:COUNTRY_LANG(cc),bday:x.bday||'',nameday:'',phone:x.phone||'',email:x.email||'',ex:false});
+    have.add(x.name.toLowerCase()); }
+  S.onboarded=true; save(); return n;
+}
+function importVcfFile(file,done){const r=new FileReader();r.onload=()=>{const n=addImported(parseVcf(r.result));done&&done();renderAll();toast(t('obImported',{n}));};r.readAsText(file);}
+async function pickContacts(done){try{const res=await navigator.contacts.select(['name','tel','email'],{multiple:true});
+  const n=addImported(res.map(c=>({name:(c.name||[])[0]||'',phone:(c.tel||[])[0]||'',email:(c.email||[])[0]||''})).filter(x=>x.name));done&&done();renderAll();toast(t('obImported',{n}));}catch(e){}}
+const canPick=()=>'contacts' in navigator&&'select' in (navigator.contacts||{});
+const OB_ROLES=[['mom','💐','mother',false],['dad','👔','father',false],['partner','❤️','',true],['sibling','🤝','',false],['friend','⭐','',false]];
+function openOnboarding(){
+  sheet.innerHTML=`<div class="grip"></div><h2>🎉 ${t('obTitle')}</h2><p class="small">${t('obSub')}</p>
+   <form id="ob" style="display:flex;flex-direction:column;gap:10px">
+    ${OB_ROLES.map(([k,ic])=>`<label class="f">${ic} ${t('ob_'+k)}<input id="ob-${k}" placeholder="${esc(t('obNamePh'))}" autocomplete="off"></label>`).join('')}
+    <div class="row" style="flex-wrap:wrap;gap:8px">
+     ${canPick()?`<button type="button" class="ghost" id="ob-pick">📇 ${t('obPick')}</button>`:''}
+     <label class="ghost" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:10px 14px;border-radius:12px;border:1px solid var(--line,#ddd)">📂 ${t('obImport')}<input type="file" id="ob-vcf" accept=".vcf,text/vcard,text/x-vcard" hidden></label>
+    </div>
+    <p class="small">${t('obImportHelp')}</p>
+    <div class="row" style="justify-content:space-between"><button type="button" class="ghost" id="ob-skip">${t('obExamples')}</button><button class="primary" type="submit">${t('obStart')}</button></div>
+   </form>`;
+  const $=id=>sheet.querySelector('#'+id);
+  const finish=()=>{dlg.close();};
+  $('ob-skip').onclick=()=>{S.onboarded=true;save();finish();};
+  $('ob-vcf').onchange=e=>{const f=e.target.files[0]; if(f) importVcfFile(f,finish);};
+  if($('ob-pick')) $('ob-pick').onclick=()=>pickContacts(finish);
+  $('ob').onsubmit=e=>{e.preventDefault();
+    const defC=UI==='el'?'GR':UI==='pl'?'PL':UI==='bg'?'BG':UI==='ro'?'RO':UI==='lv'?'LV':(UI==='sr'||UI==='srl')?'RS':'GB';
+    const add=OB_ROLES.map(([k,ic,role,partner],i)=>({k,role,partner,name:$('ob-'+k).value.trim()})).filter(x=>x.name);
+    if(!add.length){toast(t('obNeedOne'));return;}
+    if(S.people.every(p=>p.ex)) S.people=[];
+    add.forEach((x,i)=>S.people.push({id:'p'+Date.now()+'_'+i,name:x.name,rel:t('ob_'+x.k),country:defC,lang:COUNTRY_LANG(defC),bday:'',nameday:'',phone:'',email:'',ex:false,
+      role:x.role,partner:x.partner,love:x.partner?'weekly':'',loveDay:5}));
+    S.onboarded=true;save();finish();renderAll();toast(t('added'));};
+  dlg.showModal();
+}
+const UX_I18N={
+ el:{obTitle:'Καλώς ήρθες στο Onomio!',obSub:'Ποιους αγαπάς; Γράψε μόνο τα ονόματα. Γιορτές και ευχές τις βρίσκουμε εμείς.',ob_mom:'Μαμά',ob_dad:'Μπαμπάς',ob_partner:'Σύντροφος / σύζυγος',ob_sibling:'Αδερφός / αδερφή',ob_friend:'Κολλητός / κολλητή',obNamePh:'Όνομα',obStart:'Ξεκινάμε',obExamples:'Δες πρώτα με παραδείγματα',obImport:'Αρχείο επαφών (.vcf)',obPick:'Από τις επαφές μου',obImportHelp:'Στις Επαφές του κινητού: Ρυθμίσεις → Εξαγωγή → αρχείο .vcf. Φέρνει ονόματα, τηλέφωνα και γενέθλια.',obImported:'Προστέθηκαν {n} επαφές',obNeedOne:'Γράψε τουλάχιστον ένα όνομα',importBtn:'📇 Εισαγωγή επαφών',callL:'Πώς τον/τη φωνάζεις (προαιρετικό)',callPh:'π.χ. Μαράκι, μαμά'},
+ en:{obTitle:'Welcome to Onomio!',obSub:'Who do you love? Just type the names. We find the dates and the wishes.',ob_mom:'Mum',ob_dad:'Dad',ob_partner:'Partner / spouse',ob_sibling:'Brother / sister',ob_friend:'Best friend',obNamePh:'Name',obStart:'Let’s go',obExamples:'Look around with examples first',obImport:'Contacts file (.vcf)',obPick:'From my contacts',obImportHelp:'In your phone’s Contacts: Settings → Export → .vcf file. It brings names, phones and birthdays.',obImported:'{n} contacts added',obNeedOne:'Type at least one name',importBtn:'📇 Import contacts',callL:'What you call them (optional)',callPh:'e.g. Mum, Sweetie'},
+ pl:{obTitle:'Witaj w Onomio!',obSub:'Kogo kochasz? Wpisz tylko imiona. Daty i życzenia znajdziemy sami.',ob_mom:'Mama',ob_dad:'Tata',ob_partner:'Partner / małżonek',ob_sibling:'Brat / siostra',ob_friend:'Najlepszy przyjaciel',obNamePh:'Imię',obStart:'Zaczynamy',obExamples:'Najpierw zobacz przykłady',obImport:'Plik kontaktów (.vcf)',obPick:'Z moich kontaktów',obImportHelp:'W Kontaktach telefonu: Ustawienia → Eksportuj → plik .vcf. Przenosi imiona, telefony i urodziny.',obImported:'Dodano kontakty: {n}',obNeedOne:'Wpisz co najmniej jedno imię',importBtn:'📇 Importuj kontakty',callL:'Jak się do niego/niej zwracasz (opcjonalnie)',callPh:'np. Mamo, Kochanie'},
+ bg:{obTitle:'Добре дошли в Onomio!',obSub:'Кого обичате? Напишете само имената. Датите и пожеланията ги намираме ние.',ob_mom:'Мама',ob_dad:'Татко',ob_partner:'Партньор / съпруг(а)',ob_sibling:'Брат / сестра',ob_friend:'Най-добър приятел',obNamePh:'Име',obStart:'Започваме',obExamples:'Първо разгледайте с примери',obImport:'Файл с контакти (.vcf)',obPick:'От моите контакти',obImportHelp:'В Контакти на телефона: Настройки → Експорт → файл .vcf. Пренася имена, телефони и рождени дни.',obImported:'Добавени контакти: {n}',obNeedOne:'Напишете поне едно име',importBtn:'📇 Внос на контакти',callL:'Как се обръщате към него/нея (по желание)',callPh:'напр. Мамо, Скъпа'},
+ ro:{obTitle:'Bine ai venit în Onomio!',obSub:'Pe cine iubești? Scrie doar numele. Datele și urările le găsim noi.',ob_mom:'Mama',ob_dad:'Tata',ob_partner:'Partener / soț / soție',ob_sibling:'Frate / soră',ob_friend:'Cel mai bun prieten',obNamePh:'Nume',obStart:'Începem',obExamples:'Vezi mai întâi cu exemple',obImport:'Fișier de contacte (.vcf)',obPick:'Din contactele mele',obImportHelp:'În Contactele telefonului: Setări → Export → fișier .vcf. Aduce nume, telefoane și zile de naștere.',obImported:'Au fost adăugate {n} contacte',obNeedOne:'Scrie cel puțin un nume',importBtn:'📇 Importă contacte',callL:'Cum îi spui (opțional)',callPh:'ex. Mami, Iubito'},
+ lv:{obTitle:'Laipni lūdzam Onomio!',obSub:'Ko tu mīli? Ieraksti tikai vārdus. Datumus un apsveikumus atradīsim mēs.',ob_mom:'Mamma',ob_dad:'Tētis',ob_partner:'Partneris / dzīvesbiedrs',ob_sibling:'Brālis / māsa',ob_friend:'Labākais draugs',obNamePh:'Vārds',obStart:'Sākam',obExamples:'Vispirms apskatīt ar piemēriem',obImport:'Kontaktu fails (.vcf)',obPick:'No maniem kontaktiem',obImportHelp:'Telefona Kontaktos: Iestatījumi → Eksportēt → .vcf fails. Tas pārnes vārdus, tālruņus un dzimšanas dienas.',obImported:'Pievienoti kontakti: {n}',obNeedOne:'Ieraksti vismaz vienu vārdu',importBtn:'📇 Importēt kontaktus',callL:'Kā tu viņu uzrunā (nav obligāti)',callPh:'piem. Mammīt, Mīļā'},
+ sr:{obTitle:'Добро дошли у Onomio!',obSub:'Кога волите? Упишите само имена. Датуме и честитке налазимо ми.',ob_mom:'Мама',ob_dad:'Тата',ob_partner:'Партнер / супружник',ob_sibling:'Брат / сестра',ob_friend:'Најбољи друг',obNamePh:'Име',obStart:'Почињемо',obExamples:'Прво погледајте са примерима',obImport:'Датотека контаката (.vcf)',obPick:'Из мојих контаката',obImportHelp:'У Контактима телефона: Подешавања → Извоз → датотека .vcf. Преноси имена, телефоне и рођендане.',obImported:'Додато контаката: {n}',obNeedOne:'Упишите бар једно име',importBtn:'📇 Увоз контаката',callL:'Како га/је зовете (није обавезно)',callPh:'нпр. Мамице, Душо'}};
+for(const [l,o] of Object.entries(UX_I18N)) Object.assign(I18N[l],o);
+I18N.srl=Object.fromEntries(Object.entries(I18N.sr).map(([k,v])=>[k,lat(v)]));
+
+/* ---------- Send channels (Viber, WhatsApp, SMS, Messenger, Email) + bulk sending ---------- */
+const VIAS=[['viber','💬','Viber'],['whatsapp','🟢','WhatsApp'],['sms','✉️','SMS'],['messenger','🔵','Messenger'],['email','📧','Email']];
+const viaOf=p=>p.via||S.set.via||'viber';
+const telDigits=p=>(p.phone||'').replace(/[^\d+]/g,'').replace(/^00/,'+');
+function sendHref(via,p,text,subject){
+  const enc=encodeURIComponent(text), d=telDigits(p);
+  if(via==='viber') return `viber://forward?text=${enc}`;
+  if(via==='whatsapp') return `https://wa.me/${d.replace('+','')}?text=${enc}`;
+  if(via==='sms') return `sms:${d}?&body=${enc}`;
+  if(via==='email') return `mailto:${encodeURIComponent(p.email||'')}?subject=${encodeURIComponent(subject||'')}&body=${enc}`;
+  return '';
+}
+async function doSend(via,p,text,subject){
+  if(via==='messenger'){
+    if(navigator.share){try{await navigator.share({text});return true;}catch(e){return false;}}
+    try{await navigator.clipboard.writeText(text);}catch(e){}
+    toast(t('msgrHint')); window.open('https://www.messenger.com/','_blank','noopener'); return true;}
+  if(via==='email'&&!p.email) toast(t('noEmail',{name:p.name}));
+  const a=document.createElement('a'); a.href=sendHref(via,p,text,subject);
+  if(via==='whatsapp'){a.target='_blank';a.rel='noopener';}
+  document.body.appendChild(a); a.click(); a.remove(); return true;
+}
+function textFor(ev,p,lang){lang=lang||p.lang||COUNTRY_LANG(p.country);
+  const w=S.set.custom[ev.type+'|'+lang]?S.set.custom[ev.type+'|'+lang].replaceAll('{name}',callName(p,lang)):wishFor(ev.type,lang,startVariant(ev),callName(p,lang),ev.date.getFullYear(),'auto',p.rel,feastFor(p,lang),p.country);
+  const s=S.plan==='free'?'\n\n'+SIGN[lang]:(S.set.sig?'\n\n'+S.set.sig:''); return w+s;}
+let B=null;
+function openBulk(pairs){B={pairs};drawBulk();if(!dlg.open)dlg.showModal();}
+function drawBulk(){
+  const rows=B.pairs.map(({ev,pid},i)=>{const p=person(pid),T=TYPES[ev.type],v=viaOf(p),sent=isSent(ev,pid);
+    return `<div class="card" style="padding:12px;margin:0;${sent?'opacity:.6':''}">
+      <div class="row" style="justify-content:space-between;align-items:flex-start;gap:8px">
+       <div><b>${sent?'✅ ':''}${esc(p.name)}</b> <span class="small">${T.ic} ${esc(T.t)}</span><p class="small" style="margin:4px 0 0;white-space:pre-line">${esc(textFor(ev,p).split('\n\n')[0])}</p></div>
+      </div>
+      <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px">${VIAS.map(([k,ic,lab])=>`<button class="${k===v?'primary':'ghost'}" style="padding:6px 10px;font-size:13px" data-b="${i}" data-via="${k}">${ic} ${lab}</button>`).join('')}</div>
+     </div>`;}).join('');
+  const next=B.pairs.find(({ev,pid})=>!isSent(ev,pid));
+  sheet.innerHTML=`<div class="grip"></div><h2>📨 ${t('bulkTitle')} <span class="lock">PREMIUM</span></h2><p class="small">${t('bulkSub')}</p>
+   ${next?`<button class="primary" id="b-next" style="width:100%;margin:6px 0 4px">${esc(t('bulkNext',{name:person(next.pid).name}))} · ${VIAS.find(x=>x[0]===viaOf(person(next.pid)))[2]}</button>`:`<p><b>${t('bulkDone')}</b></p>`}
+   <div style="display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto">${rows}</div>
+   <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="ghost" id="b-close">${t('close')}</button></div>`;
+  const send=(i,via)=>{const {ev,pid}=B.pairs[i],p=person(pid);doSend(via,p,textFor(ev,p),t('mailSubj'));S.sent[sentKey(ev,pid)]=true;save();
+    if(B.pairs.every(x=>isSent(x.ev,x.pid))){burst();toast(t('bulkDone'));} drawBulk();renderAll(false);};
+  sheet.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>send(+b.dataset.b,b.dataset.via));
+  const nb=sheet.querySelector('#b-next'); if(nb) nb.onclick=()=>{const i=B.pairs.indexOf(next);send(i,viaOf(person(next.pid)));};
+  sheet.querySelector('#b-close').onclick=()=>dlg.close();
+}
+const todayPairs=()=>buildEvents().filter(ev=>days(ev.date)===0).flatMap(ev=>ev.people.map(pid=>({ev,pid})));
+const SEND_I18N={
+ el:{viaL:'Προτιμώμενος τρόπος αποστολής',defVia:'Προεπιλεγμένος τρόπος αποστολής',bulkTitle:'Αποστολή σε όλους',bulkSub:'Κάθε μήνυμα έχει το όνομα του καθενός. Πάτα «Στείλε στον επόμενο» ή διάλεξε τρόπο για τον καθένα· όταν γυρίσεις, συνεχίζεις με τον επόμενο.',bulkNext:'▶ Στείλε στον επόμενο: {name}',bulkDone:'Όλοι πήραν ευχή! 🎉',todayAll:'📨 Στείλε σε όλους σήμερα ({n})',mailSubj:'Χρόνια πολλά! 🎉',msgrHint:'Το μήνυμα αντιγράφηκε: επικόλλησέ το στο Messenger',noEmail:'Δεν υπάρχει email για {name}: διάλεξε παραλήπτη στο email'},
+ en:{viaL:'Preferred way to send',defVia:'Default way to send',bulkTitle:'Send to everyone',bulkSub:'Each message has the person’s own name. Tap “Send to next” or pick a way for each person; when you come back, carry on with the next one.',bulkNext:'▶ Send to next: {name}',bulkDone:'Everyone got a wish! 🎉',todayAll:'📨 Send to everyone today ({n})',mailSubj:'Best wishes! 🎉',msgrHint:'Message copied: paste it in Messenger',noEmail:'No email for {name}: pick the recipient in your mail app'},
+ pl:{viaL:'Preferowany sposób wysyłki',defVia:'Domyślny sposób wysyłki',bulkTitle:'Wyślij do wszystkich',bulkSub:'Każda wiadomość ma imię danej osoby. Dotknij „Wyślij do następnej osoby” albo wybierz sposób dla każdego; po powrocie kontynuuj z kolejną.',bulkNext:'▶ Wyślij do następnej osoby: {name}',bulkDone:'Wszyscy dostali życzenia! 🎉',todayAll:'📨 Wyślij dziś do wszystkich ({n})',mailSubj:'Najlepsze życzenia! 🎉',msgrHint:'Wiadomość skopiowana: wklej ją w Messengerze',noEmail:'Brak e-maila dla {name}: wybierz odbiorcę w poczcie'},
+ bg:{viaL:'Предпочитан начин на изпращане',defVia:'Начин на изпращане по подразбиране',bulkTitle:'Изпращане до всички',bulkSub:'Всяко съобщение е с името на човека. Натиснете „Изпрати на следващия“ или изберете начин за всеки; като се върнете, продължете със следващия.',bulkNext:'▶ Изпрати на следващия: {name}',bulkDone:'Всички получиха пожелание! 🎉',todayAll:'📨 Изпрати на всички днес ({n})',mailSubj:'Честито! 🎉',msgrHint:'Съобщението е копирано: поставете го в Messenger',noEmail:'Няма имейл за {name}: изберете получател в пощата'},
+ ro:{viaL:'Modul preferat de trimitere',defVia:'Modul implicit de trimitere',bulkTitle:'Trimite tuturor',bulkSub:'Fiecare mesaj are numele persoanei. Apasă „Trimite următorului” sau alege modul pentru fiecare; când revii, continui cu următorul.',bulkNext:'▶ Trimite următorului: {name}',bulkDone:'Toți au primit urări! 🎉',todayAll:'📨 Trimite tuturor azi ({n})',mailSubj:'La mulți ani! 🎉',msgrHint:'Mesaj copiat: lipește-l în Messenger',noEmail:'Nu există email pentru {name}: alege destinatarul în aplicația de email'},
+ lv:{viaL:'Vēlamais sūtīšanas veids',defVia:'Noklusējuma sūtīšanas veids',bulkTitle:'Sūtīt visiem',bulkSub:'Katrā ziņā ir cilvēka vārds. Nospied „Sūtīt nākamajam” vai izvēlies veidu katram; kad atgriezies, turpini ar nākamo.',bulkNext:'▶ Sūtīt nākamajam: {name}',bulkDone:'Visi saņēma apsveikumu! 🎉',todayAll:'📨 Sūtīt visiem šodien ({n})',mailSubj:'Daudz laimes! 🎉',msgrHint:'Ziņa nokopēta: ielīmē to Messenger',noEmail:'Nav e-pasta: {name}. Izvēlies saņēmēju e-pastā'},
+ sr:{viaL:'Жељени начин слања',defVia:'Подразумевани начин слања',bulkTitle:'Пошаљи свима',bulkSub:'Свака порука има име особе. Притисните „Пошаљи следећем” или изаберите начин за свакога; кад се вратите, наставите са следећим.',bulkNext:'▶ Пошаљи следећем: {name}',bulkDone:'Сви су добили честитку! 🎉',todayAll:'📨 Пошаљи свима данас ({n})',mailSubj:'Честитам! 🎉',msgrHint:'Порука је копирана: налепите је у Messenger',noEmail:'Нема имејла за {name}: изаберите примаоца у пошти'}};
+for(const [l,o] of Object.entries(SEND_I18N)) Object.assign(I18N[l],o);
+I18N.srl=Object.fromEntries(Object.entries(I18N.sr).map(([k,v])=>[k,lat(v)]));
+
+const samplesFor=l=>SAMPLES[l].map(p=>({nameday:'',phone:'',email:'',ex:true,...p}));
+const KEY='onomio.v1';
+const DEF_SET = {time:'09:00',before:1,hol:{newyear:true,christmas:true,easter:true,thanks:true,valentine:true,local:true,slava:true,family:true,national:false},bday:true,nameday:true,love:true,accent:'pink',custom:{},sig:'',ui:'auto',via:'viber'};
+let S = {people:null,sent:{},plan:'free',set:JSON.parse(JSON.stringify(DEF_SET))};
+try{const raw=localStorage.getItem(KEY); if(raw){const v=JSON.parse(raw); if(v&&Array.isArray(v.people)) S={...S,...v,set:{...DEF_SET,...(v.set||{}),hol:{...DEF_SET.hol,...((v.set||{}).hol||{})}}};}}catch(e){}
+const uiLang=()=>S.set.ui&&S.set.ui!=='auto'?S.set.ui:DEVICE_LANG;
+if(!S.people) S.people=samplesFor(uiLang());
+const HOL_GROUP = {newyear:'newyear',christmas:'christmas',christmas_j:'christmas',wigilia:'christmas',easter_o:'easter',easter_w:'easter',thanks_us:'thanks',thanks_ca:'thanks',valentine:'valentine',dragobete:'valentine',martisor:'local',ligo:'local'};
+function nextLove(p){
+  if(!p.love) return null;
+  if(p.love==='daily') return T0;
+  if(p.love==='weekly'){const wd=+(p.loveDay??5);return addDays(T0,(wd-T0.getDay()+7)%7);}
+  if(p.love==='monthly'){const d=new Date(Y,T0.getMonth(),1);return d<T0?new Date(Y,T0.getMonth()+1,1):d;}
+  return null;
+}
+const ACCENTS = {pink:['#E3346E','#FF5E92'],violet:['#6A55F0','#9C8CFF'],mint:['#0F8F82','#3DD6C4'],sun:['#B9820A','#FFC845']};
+function applyAccent(){const a=ACCENTS[S.set.accent]||ACCENTS.pink;let el=document.getElementById('acc');if(!el){el=document.createElement('style');el.id='acc';document.head.appendChild(el);}
+  el.textContent=`:root{--accent:${a[0]}}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--accent:${a[1]}}}:root[data-theme="dark"]{--accent:${a[1]}}`;}
+applyAccent();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
+let tab='upcoming';
+const AV_COLORS=['var(--accent)','var(--violet)','var(--mint)','var(--sun)'];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+setUI(uiLang());
+
+/* ---------- Events ---------- */
+function buildEvents(){
+  const map=new Map();
+  const push=(type,date,pid)=>{const key=type+'|'+iso(date);if(!map.has(key))map.set(key,{key,type,date,people:[]});map.get(key).people.push(pid);};
+  for(const p of S.people){
+    if(p.bday&&S.set.bday) push('birthday',nextBy(fixedFn(p.bday)),p.id);
+    const nf=S.set.nameday&&namedayFn(p); if(nf) push('nameday',nextBy(nf),p.id);
+    for(const h of holidaysFor(p.country)) if(S.set.hol[HOL_GROUP[h]]) push(h,nextBy(HOLIDAY_FN[h]),p.id);
+    if(p.partner&&S.set.hol.valentine) push('valentine',nextBy(HOLIDAY_FN.valentine),p.id);
+    if(p.partner&&S.set.hol.valentine&&(p.country==='RO'||p.country==='MD')) push('dragobete',nextBy(HOLIDAY_FN.dragobete),p.id);
+    const sf=S.set.hol.slava&&slavaFn(p.slava); if(sf) push('slava',nextBy(sf),p.id);
+    const role=roleOf(p), cc=p.country;
+    if(S.set.hol.family){const mf=role==='mother'&&ruleFn(MOTHER_DAY[cc]); if(mf) push('mothers',nextBy(mf),p.id);
+      const ff=role==='father'&&ruleFn(FATHER_DAY[cc]); if(ff) push('fathers',nextBy(ff),p.id);
+      if((role==='mother'||role==='woman')&&WOMEN_DAY[cc]) push('womens',nextBy(ruleFn(WOMEN_DAY[cc])),p.id);}
+    if(S.set.hol.national&&NATIONAL_DAY[cc]) push('national',nextBy(fixedFn(NATIONAL_DAY[cc])),p.id);
+    const ld=S.set.love&&nextLove(p); if(ld) push('love',ld,p.id);
+  }
+  const out=[];
+  for(const ev of map.values()){
+    if(ev.type==='birthday'||ev.type==='nameday'||ev.type==='love'||ev.type==='slava'){for(const pid of ev.people) out.push({...ev,key:ev.key+'|'+pid,people:[pid]});}
+    else out.push(ev);
+  }
+  return out.sort((a,b)=>a.date-b.date||a.type.localeCompare(b.type));
+}
+const person=id=>S.people.find(p=>p.id===id);
+const sentKey=(ev,pid)=>ev.key.split('|').slice(0,2).join('|')+'|'+pid;
+const isSent=(ev,pid)=>!!S.sent[sentKey(ev,pid)];
+
+/* ---------- Render: today card ---------- */
+function renderToday(){
+  const mmdd=iso(T0).slice(5);
+  const has=cs=>S.people.some(p=>cs.includes(p.country));
+  const showGR=UI==='el'||has(['GR','CY']), showPL=UI==='pl'||has(['PL']), showBG=UI==='bg'||has(['BG']), showRO=UI==='ro'||has(['RO']), showLV=UI==='lv'||has(['LV']), showSR=UI==='sr'||UI==='srl'||has(['RS','ME']);
+  const gr=showGR?GR_CAL.filter(([d])=>d===mmdd).flatMap(x=>x[1]):[];
+  const e=orthodoxEaster(Y); if(showGR&&days(addDays(e,1))===0 && new Date(Y,3,23)<e) gr.push('Γιώργος','Γεώργιος','Γεωργία');
+  const pl=showPL?PL_CAL.filter(([d])=>d===mmdd).flatMap(x=>x[1]):[];
+  const bg=showBG?BG_CAL.filter(([d])=>d===mmdd).flatMap(x=>x[1]):[]; if(showBG&&days(addDays(e,-7))===0) bg.push(...BG_CAL.find(x=>x[2]==='palm')[1]);
+  const ro=showRO?RO_CAL.filter(([d])=>d===mmdd).flatMap(x=>x[1]):[]; if(showRO&&days(addDays(e,-7))===0) ro.push(...RO_CAL.find(x=>x[2]==='palm')[1]);
+  if(showRO){const g=RO_CAL.find(x=>x[2]==='george')[1]; if(new Date(Y,3,23)<e){ if(mmdd==='04-23') ro.splice(0,ro.length,...ro.filter(n=>!g.includes(n))); if(days(addDays(e,1))===0) ro.push(...g);}}
+  const lv=showLV?LV_CAL.filter(([d])=>d===mmdd).flatMap(x=>x[1]):[];
+  const srn=showSR?SR_CAL_CYR.filter(([d])=>d===mmdd).flatMap(x=>x[1]).map(n=>UI==='sr'?n:lat(n)):[];
+  const slToday=showSR?SLAVE.filter(s=>{const f=slavaFn(s.k);return days(f(Y))===0;}).map(s=>slavaLabel(s.k,UI==='sr'?'sr':UI==='el'?'el':UI==='srl'?'srl':'en')):[];
+  const evs=buildEvents().filter(ev=>days(ev.date)===0);
+  const mine=evs.flatMap(ev=>ev.people.map(pid=>person(pid)?.name)).filter(Boolean);
+  document.getElementById('todaycard').innerHTML=`
+    <h2>${t('today')} · ${esc(fmt.format(T0))}</h2>
+    ${gr.length?`<p><span class="cc">GR</span>${t('celebrate')} <span class="names">${esc(gr.join(', '))}</span></p>`:''}
+    ${pl.length?`<p><span class="cc">PL</span>${t('celebrate')} <span class="names">${esc(pl.join(', '))}</span></p>`:''}
+    ${bg.length?`<p><span class="cc">BG</span>${t('celebrate')} <span class="names">${esc(bg.join(', '))}</span></p>`:''}
+    ${ro.length?`<p><span class="cc">RO</span>${t('celebrate')} <span class="names">${esc(ro.join(', '))}</span></p>`:''}
+    ${lv.length?`<p><span class="cc">LV</span>${t('celebrate')} <span class="names">${esc(lv.join(', '))}</span></p>`:''}
+    ${srn.length?`<p><span class="cc">RS</span>${t('celebrate')} <span class="names">${esc(srn.join(', '))}</span></p>`:''}
+    ${slToday.length?`<p>🕯️ ${t('slavaToday')} <b>${esc(slToday.join(', '))}</b></p>`:''}
+    ${!gr.length&&!pl.length&&!bg.length&&!ro.length&&!lv.length&&!srn.length?`<p class="small">${t('noFeast')}</p>`:''}
+    ${mine.length?`<p>${t('yours')} <b>${esc([...new Set(mine)].join(', '))}</b></p>`:''}
+    ${evs.flatMap(e=>e.people).length>1?`<button class="primary" id="today-all" style="margin-top:6px">${t('todayAll',{n:evs.flatMap(e=>e.people).length})}</button>`:''}`;
+  const ta=document.getElementById('today-all'); if(ta) ta.onclick=()=>openBulk(todayPairs());
+}
+
+/* ---------- Render: upcoming ---------- */
+function renderUpcoming(){
+  const evs=buildEvents();
+  const groups=[[t('today'),d=>d===0],[t('tomorrow'),d=>d===1],[t('week'),d=>d>1&&d<=7],[t('month'),d=>d>7&&d<=31],[t('later'),d=>d>31]];
+  let html='';
+  if(S.plan==='free'&&S.people.length>3) html+=`<div class="banner">${t('freeBanner')}</div>`;
+  if(!evs.length) html+=`<div class="empty">${t('empty')}</div>`;
+  for(const [label,test] of groups){
+    const list=evs.filter(ev=>test(days(ev.date))); if(!list.length) continue;
+    html+=`<section class="group"><h3>${label}</h3>`;
+    for(const ev of list){
+      const T=TYPES[ev.type], n=days(ev.date);
+      const names=ev.people.map(pid=>person(pid)?.name).filter(Boolean);
+      const allSent=ev.people.every(pid=>isSent(ev,pid));
+      const who=ev.people.length===1?`${esc(names[0])} · ${esc(person(ev.people[0]).rel||'')}`:`${t('nPeople',{n:names.length})}: ${esc(names.join(', '))}`;
+      const pill=allSent?`<span class="pill done">${t('sent')}</span>`:n===0?`<span class="pill today">${t('today')}</span>`:`<span class="pill">${inDays(n)}</span>`;
+      html+=`<button class="ev ${T.cls}" data-ev="${esc(ev.key)}"><span class="ic" aria-hidden="true">${T.ic}</span>
+        <span class="body"><span class="t">${esc(T.t)}</span><span class="who">${who}</span></span>
+        <span class="when">${pill}<span>${esc(fmt.format(ev.date))}</span></span></button>`;
+    }
+    html+=`</section>`;
+  }
+  view.innerHTML=`<div style="display:flex;flex-direction:column;gap:14px">${html}</div>`;
+  view.querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>openComposer(evs.find(e=>e.key===b.dataset.ev)));
+}
+
+/* ---------- Render: people ---------- */
+function loveLabel(p){return p.love?'💌 '+t('lf_'+p.love).toLowerCase()+(p.love==='weekly'?' ('+WEEKDAYS[+(p.loveDay??5)]+')':''):'';}
+function renderPeople(){
+  let html=`<div class="row" style="justify-content:space-between"><p class="small">${t('nPeople',{n:S.people.length})}${S.plan==='free'?t('freeUpTo3'):''}</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap">${canPick()?`<button class="ghost" id="imp-pick">${t('obPick')}</button>`:''}<label class="ghost" style="cursor:pointer;display:inline-flex;align-items:center;padding:10px 14px;border-radius:12px;border:1px solid var(--line,#ddd);font-weight:600">${t('importBtn')}<input type="file" id="imp-vcf" accept=".vcf,text/vcard,text/x-vcard" hidden></label><button class="primary" id="add">${t('addPerson')}</button></div></div>`;
+  S.people.forEach((p,i)=>{
+    const nf=namedayFn(p), nd=nf?nextBy(nf):null, bd=p.bday?nextBy(fixedFn(p.bday)):null;
+    const bits=[]; if(bd) bits.push('🎂 '+fmt.format(bd)); if(nd) bits.push('🌸 '+fmt.format(nd)); const sfp=slavaFn(p.slava); if(sfp) bits.push('🕯️ '+fmt.format(nextBy(sfp))); if(p.love) bits.push(loveLabel(p));
+    html+=`<div class="person"><div class="avatar" style="background:${AV_COLORS[i%4]}">${esc(p.name.slice(0,1).toUpperCase())}</div>
+      <div style="min-width:0"><div class="name">${esc(p.name)}${p.ex?`<span class="ex">${t('example')}</span>`:''}</div>
+      <div class="meta"><span class="cc">${esc(p.country)}</span>${esc(p.rel||'')} · ${esc(countryName(p.country))}</div>
+      <div class="meta">${bits.join(' · ')||t('noDates')}</div></div>
+      <button class="ghost" data-edit="${p.id}">${t('edit')}</button></div>`;
+  });
+  view.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px">${html}</div>`;
+  document.getElementById('add').onclick=()=>openPerson(null);
+  document.getElementById('imp-vcf').onchange=e=>{const f=e.target.files[0]; if(f) importVcfFile(f);};
+  const ip=document.getElementById('imp-pick'); if(ip) ip.onclick=()=>pickContacts();
+  view.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openPerson(person(b.dataset.edit)));
+}
+
+/* ---------- Render: settings ---------- */
+function renderSettings(){
+  const uiNames={auto:t('auto'),...LANGS};
+  view.innerHTML=`<div style="display:flex;flex-direction:column;gap:14px">
+   <div class="panel"><h3>${t('plan')}</h3>
+    <div class="seg"><button data-plan="free" aria-pressed="${S.plan==='free'}">${t('free')}</button><button data-plan="premium" aria-pressed="${S.plan==='premium'}">${t('premiumTrial')}</button></div>
+    <p class="small">${S.plan==='free'?t('freeDesc'):t('premDesc')}</p></div>
+   <div class="panel"><h3>${t('reminders')}</h3>
+    <div class="grid2">
+     <label class="f">${t('remTime')}<input type="time" id="s-time" value="${esc(S.set.time)}"></label>
+     <label class="f">${t('remWhen')}<select id="s-before">${[[0,'b0'],[1,'b1'],[3,'b3'],[7,'b7']].map(([v,k])=>`<option value="${v}"${+S.set.before===v?' selected':''}>${t(k)}</option>`).join('')}</select></label>
+    </div>
+    <p class="small">${t('remNote')}</p></div>
+   <div class="panel"><h3>${t('remindWhat')}</h3>
+    <div class="chips">
+     ${[['bday','🎂 '+t('cBday'),S.set.bday],['nameday','🌸 '+t('cNameday'),S.set.nameday],['h-newyear','🥂 '+t('cNewyear'),S.set.hol.newyear],['h-christmas','🎄 '+t('cXmas'),S.set.hol.christmas],['h-easter','🕯️ '+t('cEaster'),S.set.hol.easter],['h-thanks','🦃 '+t('cThanks'),S.set.hol.thanks],['h-valentine','❤️ '+t('cValentine'),S.set.hol.valentine],['h-local','🌿 '+t('cLocal'),S.set.hol.local],['h-slava','🕯️ '+t('cSlava'),S.set.hol.slava],['h-family','💐 '+t('cFamily'),S.set.hol.family],['h-national','🏛️ '+t('cNational'),S.set.hol.national],['love','💌 '+t('cLove'),S.set.love]]
+       .map(([k,txt,on])=>`<button class="chip" data-tg="${k}" aria-pressed="${!!on}">${txt}</button>`).join('')}
+    </div></div>
+   <div class="panel"><h3>${t('myWishes')}</h3>
+    <p class="small">${t('myWishesHelp')}</p>
+    <div class="grid2">
+     <label class="f">${t('occasion')}<select id="s-wt">${['birthday','nameday','newyear','christmas','easter_o','easter_w','thanksgiving','love','valentine','martisor','dragobete','ligo','slava','mothers','fathers','womens','national'].map(k=>`<option value="${k}">${t('t_'+k)}</option>`).join('')}</select></label>
+     <label class="f">${t('language')}<select id="s-wl">${Object.entries(LANGS).map(([k,v])=>`<option value="${k}"${k===UI?' selected':''}>${v}</option>`).join('')}</select></label>
+    </div>
+    <label class="f">${t('myWish')}<textarea id="s-wtext" placeholder="${esc(t('myWishPh'))}"></textarea></label>
+    <div class="row"><button class="primary" id="s-wsave">${t('saveWish')}</button><button class="ghost" id="s-wdel">${t('resetWish')}</button></div></div>
+   <div class="panel"><h3>${t('look')}</h3>
+    <label class="f">${t('appLang')}<select id="s-ui">${Object.entries(uiNames).map(([k,v])=>`<option value="${k}"${k===(S.set.ui||'auto')?' selected':''}>${esc(v)}</option>`).join('')}</select></label>
+    <div class="chips">${Object.entries(ACCENTS).map(([k,a])=>`<button class="chip" data-acc="${k}" aria-pressed="${S.set.accent===k}"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${a[0]};margin-right:6px"></span>${t('ac_'+k)}</button>`).join('')}</div>
+    <label class="f">${t('defVia')}<select id="s-via">${VIAS.map(([k,ic,lab])=>`<option value="${k}"${k===(S.set.via||'viber')?' selected':''}>${ic} ${lab}</option>`).join('')}</select></label>
+    <label class="f">${t('mySig')}${S.plan==='free'?' <span class="lock">PREMIUM</span>':''}<input id="s-sig" value="${esc(S.set.sig)}" placeholder="${esc(t('sigPh'))}" ${S.plan==='free'?'disabled':''}></label>
+    ${S.plan==='free'?`<p class="small">${t('freeSigNote',{sig:SIGN[UI]})}</p>`:''}</div>
+   <div class="panel"><h3>${t('howHol')}</h3>
+    <p class="small">${t('howHol1')}</p>
+    <p class="small">${t('howHol2',{y:2027,w:esc(fmt.format(westernEaster(2027))),o:esc(fmt.format(orthodoxEaster(2027)))})}</p>
+    <p class="small">${t('howHol3')}</p></div>
+   <div class="panel"><h3>${t('data')}</h3>
+    <p class="small">${t('dataNote')}</p>
+    <p class="small" id="s-links"></p>
+    <div class="row"><button class="ghost danger" id="reset">${t('resetEx')}</button></div></div>
+  </div>`;
+  view.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{S.plan=b.dataset.plan;save();renderSettings();});
+  const $=id=>document.getElementById(id);
+  if(location.protocol.startsWith('http')&&location.hostname.endsWith('onomio.app')) $('s-links').innerHTML=`<a href="/privacy/" style="color:var(--violet)">${t('privacy')}</a> · ${t('contact')}: support@onomio.app`;
+  else $('s-links').textContent=`${t('contact')}: support@onomio.app`;
+  $('s-time').onchange=e=>{S.set.time=e.target.value;save();toast(t('saved'));};
+  $('s-before').onchange=e=>{S.set.before=+e.target.value;save();toast(t('saved'));};
+  $('s-ui').onchange=e=>{S.set.ui=e.target.value;save();setUI(uiLang());renderAll();toast(t('saved'));};
+  view.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{const k=b.dataset.tg;
+    if(k.startsWith('h-'))S.set.hol[k.slice(2)]=!S.set.hol[k.slice(2)];else S.set[k]=!S.set[k];
+    b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');save();renderToday();});
+  const wk=()=>$('s-wt').value+'|'+$('s-wl').value;
+  const loadW=()=>{$('s-wtext').value=S.set.custom[wk()]||'';};
+  $('s-wt').onchange=loadW;$('s-wl').onchange=loadW;loadW();
+  $('s-wsave').onclick=()=>{const v=$('s-wtext').value.trim();if(!v){toast(t('writeFirst'));return;}S.set.custom[wk()]=v;save();toast(t('wishSaved'));};
+  $('s-wdel').onclick=()=>{delete S.set.custom[wk()];save();loadW();toast(t('wishReset'));};
+  view.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>{S.set.accent=b.dataset.acc;save();applyAccent();renderSettings();});
+  $('s-via').onchange=e=>{S.set.via=e.target.value;save();toast(t('saved'));};
+  const sig=$('s-sig');if(sig)sig.onchange=e=>{S.set.sig=e.target.value.trim();save();toast(t('saved'));};
+  const r=document.getElementById('reset'); let armed=false;
+  r.onclick=()=>{ if(!armed){armed=true;r.textContent=t('confirmAgain');return;}
+    S={people:samplesFor(UI),sent:{},plan:S.plan,set:S.set};save();renderAll();toast(t('examplesBack'));};
+}
+
+/* ---------- Composer ---------- */
+const dlg=document.getElementById('dlg'), sheet=document.getElementById('sheet');
+let C=null;
+function startVariant(ev){return ev.type==='love'?Math.round((ev.date-new Date(ev.date.getFullYear(),0,1))/864e5):0;}
+const FORMAL_REL=/συνεργ|πελάτ|συνάδελφ|προϊστ|διευθυντ|γείτ|colleague|client|boss|manager|współpr|klient|szef|kierown/i;
+function tagOf(e){return e.startsWith('f|')?'f':e.startsWith('h|')?'h':'w';}
+function wishPool(type,lang,tone='auto',rel=''){
+  const w=TYPES[type].w, bank=WISHES[w]; const all=[...(bank[lang]||bank.en||bank.el)];
+  let want = tone==='auto' ? (FORMAL_REL.test(rel||'')?['f']:['w','h']) : [tone];
+  let arr=all.filter(e=>want.includes(tagOf(e)));
+  if(!arr.length) arr=all;
+  arr=arr.map(e=>e.replace(/^[fh]\|/,''));
+  const own=S.set.custom[w+'|'+lang]; if(own) arr=[own,...arr];
+  return arr;
+}
+function wishFor(type,lang,variant,name,year,tone='auto',rel='',feast='',country=''){
+  let arr=wishPool(type,lang,tone,rel); if(!feast){const a=arr.filter(x=>!x.includes('{feast}')); if(a.length) arr=a;}
+  return arr[((variant%arr.length)+arr.length)%arr.length].replaceAll('{name}',name).replaceAll('{year}',year).replaceAll('{feast}',feast||'').replaceAll('{flag}',flagOf(country)).trim();
+}
+function openComposer(ev){
+  C={ev,idx:0,variant:0,tone:'auto'}; setRecipient(0); drawComposer(); dlg.showModal();
+}
+function setRecipient(i){
+  C.idx=i; const p=person(C.ev.people[i]); C.lang=p.lang||COUNTRY_LANG(p.country); C.variant=startVariant(C.ev);
+  C.text=wishFor(C.ev.type,C.lang,C.variant,callName(p,C.lang),C.ev.date.getFullYear(),C.tone,p.rel,feastFor(p,C.lang),p.country);
+}
+function fullText(){const s=S.plan==='free'?'\n\n'+SIGN[C.lang]:(S.set.sig?'\n\n'+S.set.sig:'');return C.text+s;}
+function drawComposer(){
+  const ev=C.ev,T=TYPES[ev.type],p=person(ev.people[C.idx]);
+  const enc=encodeURIComponent(fullText());
+  const digits=(p.phone||'').replace(/[^\d+]/g,'');
+  const regen=()=>{C.text=wishFor(ev.type,C.lang,C.variant,callName(p,C.lang),ev.date.getFullYear(),C.tone,p.rel,feastFor(p,C.lang),p.country);drawComposer();};
+  sheet.innerHTML=`<div class="grip"></div>
+   <div><h2>${T.ic} ${esc(T.t)}</h2><p class="small">${esc(fmt.format(ev.date))} · ${days(ev.date)===0?t('todayLow'):inDays(days(ev.date))}</p></div>
+   ${ev.people.length>1?`<div class="chips">${ev.people.map((pid,i)=>`<button class="chip" data-r="${i}" aria-pressed="${i===C.idx}">${esc(person(pid).name)}${isSent(ev,pid)?' <span class="ok">✓</span>':''}</button>`).join('')}</div>`:''}
+   <div class="grid2">
+    <label class="f">${t('wishLang')}<select id="c-lang">${Object.entries(LANGS).map(([k,v])=>`<option value="${k}"${k===C.lang?' selected':''}>${v}</option>`).join('')}</select></label>
+    <label class="f">${t('tone')}<select id="c-tone">${['auto','w','f','h'].map(k=>`<option value="${k}"${k===C.tone?' selected':''}>${t('tn_'+k)}</option>`).join('')}</select></label>
+    <div class="f" style="justify-content:flex-end"><div class="row"><button class="ghost" id="c-next">${t('another')}</button><button class="ghost" id="c-ai">✨ AI<span class="lock">PREMIUM</span></button></div></div>
+   </div>
+   <label class="f">${esc(t('msgTo',{name:p.name}))}<textarea id="c-text">${esc(C.text)}</textarea></label>
+   ${S.plan==='free'?`<p class="hint">${esc(t('sigHint',{sig:SIGN[C.lang]}))}</p>`:''}
+   <div class="send">
+    ${VIAS.map(([k,ic,lab])=>`<button data-via="${k}"${k===viaOf(p)?' style="border-color:var(--pink,#E3346E);border-width:2px"':''}><b>${ic}</b>${lab}</button>`).join('')}
+    <button id="c-copy"><b>📋</b>${t('copy')}</button>
+   </div>
+   <p class="hint">${t('copyHint')}</p>
+   <div class="row" style="justify-content:space-between">
+    <button class="ghost" id="c-close">${t('close')}</button>
+    <div class="row">${ev.people.length>1?`<button class="ghost" id="c-all">📨 ${t('toAll')} (${ev.people.length})<span class="lock">PREMIUM</span></button>`:''}
+    <button class="primary" id="c-done">${isSent(ev,p.id)?t('sent'):t('iSent')}</button></div>
+   </div>`;
+  sheet.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{setRecipient(+b.dataset.r);drawComposer();});
+  sheet.querySelector('#c-lang').onchange=e=>{C.lang=e.target.value;C.variant=startVariant(ev);regen();};
+  sheet.querySelector('#c-tone').onchange=e=>{C.tone=e.target.value;C.variant=startVariant(ev);regen();};
+  sheet.querySelector('#c-next').onclick=()=>{C.variant++;regen();};
+  sheet.querySelector('#c-ai').onclick=()=>toast(S.plan==='premium'?t('aiSoon'):t('premiumOnly'));
+  sheet.querySelector('#c-text').oninput=e=>{C.text=e.target.value;};
+  sheet.querySelectorAll('.send [data-via]').forEach(b=>b.onclick=()=>doSend(b.dataset.via,p,fullText(),t('mailSubj')));
+  sheet.querySelector('#c-copy').onclick=async()=>{const txt=fullText();
+    try{await navigator.clipboard.writeText(txt);toast(t('copied'));}catch(e){const ta=sheet.querySelector('#c-text');ta.focus();ta.select();toast(t('selected'));}};
+  sheet.querySelector('#c-close').onclick=()=>dlg.close();
+  const all=sheet.querySelector('#c-all'); if(all) all.onclick=()=>openBulk(ev.people.map(pid=>({ev,pid})));
+  sheet.querySelector('#c-done').onclick=()=>{
+    S.sent[sentKey(ev,p.id)]=true;save();burst();
+    const nextI=ev.people.findIndex(pid=>!isSent(ev,pid));
+    if(nextI>=0){setRecipient(nextI);drawComposer();toast(t('nextP',{name:person(ev.people[nextI]).name}));}
+    else{dlg.close();toast(t('allDone'));}
+    renderAll(false);};
+}
+dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close();});
+
+/* ---------- Person editor ---------- */
+function openPerson(p){
+  const defC=UI==='el'?'GR':UI==='pl'?'PL':UI==='bg'?'BG':UI==='ro'?'RO':UI==='lv'?'LV':(UI==='sr'||UI==='srl')?'RS':'GB';
+  const isNew=!p; const d=p?{...p}:{id:'p'+Date.now(),name:'',rel:'',country:defC,lang:COUNTRY_LANG(defC),bday:'',nameday:'',phone:'',email:''};
+  const toInput=mmdd=>mmdd?`2000-${mmdd}`:'';
+  sheet.innerHTML=`<div class="grip"></div><h2>${isNew?t('newP'):t('editP')}</h2>
+   <form id="pf" style="display:flex;flex-direction:column;gap:12px">
+    <div class="grid2"><label class="f">${t('name')}<input id="p-name" required value="${esc(d.name)}" placeholder="${esc(t('namePh'))}"></label>
+     <label class="f">${t('rel')}<input id="p-rel" value="${esc(d.rel)}" placeholder="${esc(t('relPh'))}"></label></div>
+    <label class="f">${t('callL')}<input id="p-call" value="${esc(d.call||'')}" placeholder="${esc(t('callPh'))}"></label>
+    <div class="grid2"><label class="f">${t('country')}<select id="p-country">${countryOptions(d.country)}</select></label>
+     <label class="f">${t('wishLang2')}<select id="p-lang">${Object.entries(LANGS).map(([k,v])=>`<option value="${k}"${k===d.lang?' selected':''}>${v}</option>`).join('')}</select></label></div>
+    <div class="grid2"><label class="f">${t('bdayL')}<input type="date" id="p-bday" value="${toInput(d.bday)}"></label>
+     <label class="f">${t('ndL')}<input type="date" id="p-nd" value="${toInput(d.nameday)}"></label></div>
+    <p class="hint" id="p-hint"></p>
+    <label class="f" id="p-slava-wrap">🕯️ ${t('slavaL')}<select id="p-slava"><option value="">${t('slavaNone')}</option>${SLAVE.map(s=>`<option value="${s.k}"${s.k===d.slava?' selected':''}>${esc(slavaLabel(s.k,UI))}</option>`).join('')}</select></label>
+    <div class="grid2"><label class="f">${t('loveL')}<select id="p-love">${LOVE_KEYS.map(k=>`<option value="${k}"${k===(d.love||'')?' selected':''}>${t('lf_'+k)}</option>`).join('')}</select></label>
+     <label class="f" id="p-lw-wrap">${t('weekday')}<select id="p-lw">${WEEKDAYS.map((w,i)=>`<option value="${i}"${i===+(d.loveDay??5)?' selected':''}>${w}</option>`).join('')}</select></label></div>
+    <label class="row" style="font-size:14px;font-weight:600;color:var(--muted);gap:8px"><input type="checkbox" id="p-partner" style="width:auto" ${d.partner?'checked':''}> ${t('partner')}</label>
+    <label class="f">${t('roleL')}<select id="p-role">${ROLES.map(r=>`<option value="${r}"${r===(d.role||'')?' selected':''}>${t('role_'+r)}</option>`).join('')}</select></label>
+    <div class="grid2"><label class="f">${t('phone')}<input id="p-phone" inputmode="tel" value="${esc(d.phone)}" placeholder="+30 69…"></label>
+     <label class="f">${t('email')}<input id="p-email" type="email" value="${esc(d.email)}"></label></div>
+    <label class="f">${t('viaL')}<select id="p-via"><option value="">${t('auto')} (${VIAS.find(x=>x[0]===(S.set.via||'viber'))[2]})</option>${VIAS.map(([k,ic,lab])=>`<option value="${k}"${k===d.via?' selected':''}>${ic} ${lab}</option>`).join('')}</select></label>
+    <div class="row" style="justify-content:space-between">
+     ${isNew?'<span></span>':`<button type="button" class="ghost danger" id="p-del">${t('del')}</button>`}
+     <div class="row"><button type="button" class="ghost" id="p-cancel">${t('cancel')}</button><button class="primary" type="submit">${t('save')}</button></div></div>
+   </form>`;
+  const $=id=>sheet.querySelector('#'+id);
+  const hint=()=>{const c=$('p-country').value,h=lookupNameday($('p-name').value,c);
+    $('p-hint').textContent=$('p-nd').value?t('hintManual')
+      :h?t('hintFound',{d:fmt.format(nextBy(namedayFn({name:$('p-name').value,country:c,nameday:''})))})
+      :NAMEDAY_CC.has(c)?t('hintNotInCal'):t('hintNoCal');};
+  $('p-name').oninput=hint; $('p-nd').oninput=hint;
+  const lw=()=>{$('p-lw-wrap').hidden=$('p-love').value!=='weekly';}; $('p-love').onchange=lw; lw();
+  const sv=()=>{$('p-slava-wrap').hidden=!SLAVA_CC.has($('p-country').value)&&!$('p-slava').value;}; sv();
+  $('p-country').onchange=()=>{$('p-lang').value=COUNTRY_LANG($('p-country').value);hint();sv();};
+  hint();
+  $('p-cancel').onclick=()=>dlg.close();
+  if(!isNew){let armed=false;$('p-del').onclick=()=>{if(!armed){armed=true;$('p-del').textContent=t('sure');return;}
+    S.people=S.people.filter(x=>x.id!==d.id);save();dlg.close();renderAll();toast(t('deleted'));};}
+  $('pf').onsubmit=e=>{e.preventDefault();
+    const mm=v=>v?v.slice(5):'';
+    Object.assign(d,{name:$('p-name').value.trim(),rel:$('p-rel').value.trim(),country:$('p-country').value,lang:$('p-lang').value,
+      bday:mm($('p-bday').value),nameday:mm($('p-nd').value),phone:$('p-phone').value.trim(),email:$('p-email').value.trim(),via:$('p-via').value,ex:false,
+      love:$('p-love').value,loveDay:+$('p-lw').value,partner:$('p-partner').checked,slava:$('p-slava').value,role:$('p-role').value,call:$('p-call').value.trim()});
+    if(!d.name)return;
+    if(isNew)S.people.push(d);else S.people=S.people.map(x=>x.id===d.id?d:x);
+    save();dlg.close();renderAll();toast(isNew?t('added'):t('saved'));};
+  dlg.showModal();
+}
+
+/* ---------- Shell ---------- */
+const view=document.getElementById('view');
+function renderAll(withTabs=true){
+  renderToday();
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.id==='tab-'+tab));
+  if(tab==='upcoming')renderUpcoming();else if(tab==='people')renderPeople();else renderSettings();
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{tab=b.id.slice(4);renderAll();});
+let tt;function toast(msg){document.querySelectorAll('.toast').forEach(x=>x.remove());const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.textContent=msg;document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(()=>el.remove(),2200);}
+
+/* ---------- Confetti burst ---------- */
+const fx=document.getElementById('fx'),ctx=fx.getContext('2d');
+function burst(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const dpr=window.devicePixelRatio||1;fx.width=innerWidth*dpr;fx.height=innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  const cs=getComputedStyle(document.documentElement);const cols=['--accent','--sun','--mint','--violet'].map(v=>cs.getPropertyValue(v).trim());
+  const P=Array.from({length:90},()=>({x:innerWidth/2,y:innerHeight*.7,vx:(Math.random()-.5)*12,vy:-Math.random()*13-5,r:Math.random()*6.28,vr:(Math.random()-.5)*.4,
+    w:5+Math.random()*5,h:3+Math.random()*3,c:cols[Math.floor(Math.random()*4)]}));
+  let f=0;(function step(){ctx.clearRect(0,0,innerWidth,innerHeight);
+    for(const q of P){q.vy+=.35;q.vx*=.99;q.x+=q.vx;q.y+=q.vy;q.r+=q.vr;ctx.save();ctx.translate(q.x,q.y);ctx.rotate(q.r);ctx.fillStyle=q.c;ctx.fillRect(-q.w/2,-q.h/2,q.w,q.h);ctx.restore();}
+    if(++f<80)requestAnimationFrame(step);else ctx.clearRect(0,0,innerWidth,innerHeight);})();
+}
+renderAll();
+if(!S.onboarded&&S.people.every(p=>p.ex)&&!/[?&]demo/.test(location.search)) setTimeout(openOnboarding,500);
+
+
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}
+</script>
+
+</body>
+</html>
