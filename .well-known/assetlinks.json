@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.onomio",
+        "sha256_cert_fingerprints": ["16:C3:03:DC:A3:BD:AC:77:A0:98:83:B2:86:F0:78:65:E3:D2:7C:FA:43:B8:F3:F6:9B:17:37:B9:CF:01:87:E1"]
+      }
+    }]
